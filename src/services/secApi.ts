@@ -49,7 +49,10 @@ function buildProxyUrl(
     return query ? `${base}?${query}` : base;
   }
 
-  const functionName = type === 'data' ? 'sec-data.js' : type === 'efts' ? 'sec-efts.js' : 'sec-proxy.js';
+  const functionName = 'sec-proxy';
+  if (type === 'data' || type === 'efts') {
+    searchParams.set('upstream', type);
+  }
   searchParams.set('path', cleanPath);
   return `/api/${functionName}?${searchParams.toString()}`;
 }
