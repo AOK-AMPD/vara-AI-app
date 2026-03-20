@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, X, ArrowRightLeft, Loader2, Sparkles, LayoutGrid, Type, DollarSign, TrendingUp, TrendingDown, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, RadarChart, PolarGrid, PolarAngleAxis, Radar, Legend } from 'recharts';
-import { fetchCompanySubmissions, fetchCompanySubmissionsBatch, fetchCompanyFacts, extractFinancials, getAvailableYears, formatFinancialValue, CIK_MAP, SecSubmission, FinancialMetric, CompanyFacts, lookupCIK, extractCompanyMetadata, loadTickerMap, buildSecProxyUrl } from '../services/secApi';
+import { fetchCompanySubmissions, fetchCompanySubmissionsBatch, fetchCompanyFacts, extractComparableFinancials, getAvailableYears, formatFinancialValue, CIK_MAP, SecSubmission, FinancialMetric, CompanyFacts, lookupCIK, extractCompanyMetadata, loadTickerMap, buildSecProxyUrl } from '../services/secApi';
 import { aiSummarize } from '../services/aiApi';
 import ResponsibleAIBanner from '../components/ResponsibleAIBanner';
 import { renderMarkdown } from '../utils/markdownRenderer';
@@ -291,7 +291,7 @@ export default function Benchmarking() {
               // Auto-select most recent year if none selected yet
               if (!newSelYears[ticker] && years.length > 0) {
                 newSelYears[ticker] = [years[0]];
-                newFacts[makeColKey(ticker, years[0])] = extractFinancials(facts, years[0]);
+                newFacts[makeColKey(ticker, years[0])] = extractComparableFinancials(facts, years[0]);
               }
             }
           }
@@ -325,7 +325,7 @@ export default function Benchmarking() {
       if (prev[key]) return prev;
       const raw = companiesRawFacts[ticker];
       if (!raw) return prev;
-      return { ...prev, [key]: extractFinancials(raw, year) };
+      return { ...prev, [key]: extractComparableFinancials(raw, year) };
     });
   }, [companiesRawFacts]);
 

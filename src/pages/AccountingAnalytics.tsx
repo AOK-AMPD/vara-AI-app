@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { TrendingUp, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import CompanySearchInput from '../components/filters/CompanySearchInput';
-import { lookupCIK, fetchCompanyFacts, computeFinancialRatios, extractFinancials } from '../services/secApi';
+import { lookupCIK, fetchCompanyFacts, computeFinancialRatios, extractComparableFinancials } from '../services/secApi';
 
 interface CompanyRatios {
   ticker: string;
@@ -60,7 +60,7 @@ export default function AccountingAnalytics() {
             const facts = await fetchCompanyFacts(cik);
             if (!facts) continue;
 
-            const normalizedMetrics = extractFinancials(facts);
+            const normalizedMetrics = extractComparableFinancials(facts);
             const metrics: Record<string, { value: number; unit: string }> = {};
 
             for (const [key, metric] of Object.entries(normalizedMetrics)) {

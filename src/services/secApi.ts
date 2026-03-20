@@ -245,7 +245,7 @@ const FINANCIAL_CONCEPTS = {
   // Income Statement
   'Revenues': ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet', 'RevenueFromContractWithCustomerIncludingAssessedTax'],
   'CostOfRevenue': ['CostOfRevenue', 'CostOfGoodsAndServicesSold', 'CostOfGoodsSold'],
-  'GrossProfit': ['GrossProfit'],
+  'GrossProfit': ['GrossProfit', 'GrossProfitLoss'],
   'OperatingIncome': ['OperatingIncomeLoss'],
   'NetIncome': ['NetIncomeLoss'],
   'EarningsPerShare': ['EarningsPerShareBasic'],
@@ -258,11 +258,17 @@ const FINANCIAL_CONCEPTS = {
   'TotalLiabilities': ['Liabilities'],
   'StockholdersEquity': ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'],
   'CashAndEquivalents': ['CashAndCashEquivalentsAtCarryingValue', 'CashCashEquivalentsAndShortTermInvestments'],
-  'TotalDebt': ['LongTermDebt', 'LongTermDebtNoncurrent'],
-  'Goodwill': ['Goodwill'],
-  'IntangibleAssets': ['IntangibleAssetsNetExcludingGoodwill'],
-  'AccountsReceivable': ['AccountsReceivableNetCurrent'],
-  'Inventory': ['InventoryNet'],
+  'TotalDebt': ['LongTermDebt', 'LongTermDebtNoncurrent', 'LongTermDebtAndCapitalLeaseObligations', 'LongTermDebtAndCapitalLeaseObligationsNoncurrent', 'LongTermDebtCurrent', 'ShortTermBorrowings', 'ShortTermDebt', 'CurrentPortionOfLongTermDebt'],
+  'Goodwill': ['Goodwill', 'GoodwillNet'],
+  'IntangibleAssets': [
+    'IntangibleAssetsNetExcludingGoodwill',
+    'FiniteLivedIntangibleAssetsNet',
+    'IndefiniteLivedIntangibleAssetsExcludingGoodwill',
+    'OtherIntangibleAssetsNet',
+    'AmortizableIntangibleAssetsNet',
+  ],
+  'AccountsReceivable': ['AccountsReceivableNetCurrent', 'AccountsReceivableNet', 'ReceivablesNetCurrent', 'AccountsNotesAndLoansReceivableNetCurrent'],
+  'Inventory': ['InventoryNet', 'Inventories', 'InventoriesNetOfReserves', 'InventoryAndServicePartsNet', 'InventoryFinishedGoods', 'InventoryGross', 'InventoryNetOfAllowancesCustomerAdvancesAndProgressBillings'],
   'CurrentAssets': ['AssetsCurrent'],
   'CurrentLiabilities': ['LiabilitiesCurrent'],
 
@@ -288,6 +294,45 @@ export interface FinancialMetric {
   unit: string;
 }
 
+function normalizeAnnualForm(form: string): string {
+  return form.trim().toUpperCase().replace(/\s+/g, '').replace(/\/A$/, '');
+}
+
+function isLikelyAnnualFact(fact: XbrlFact): boolean {
+  const form = normalizeAnnualForm(fact.form || '');
+  const isAnnualForm = ['10-K', '10-KT', '20-F', '40-F'].includes(form);
+  if (!isAnnualForm) return false;
+
+  const fp = (fact.fp || '').toUpperCase();
+  if (!fp || fp === 'FY' || fp === 'CY') {
+    return true;
+  }
+
+  if (fact.start && fact.end) {
+    const start = Date.parse(fact.start);
+    const end = Date.parse(fact.end);
+    if (!Number.isNaN(start) && !Number.isNaN(end)) {
+      const days = Math.abs(end - start) / (1000 * 60 * 60 * 24);
+      return days >= 300;
+    }
+  }
+
+  return false;
+}
+
+function getPreferredUnits(concept: { units: Record<string, XbrlFact[]> }): { unitKey: string; facts: XbrlFact[] } | null {
+  const preferred = ['USD', 'USD/shares', 'shares'];
+  for (const unitKey of preferred) {
+    const facts = concept.units[unitKey];
+    if (facts && facts.length > 0) {
+      return { unitKey, facts };
+    }
+  }
+
+  const fallback = Object.entries(concept.units).find(([, facts]) => Array.isArray(facts) && facts.length > 0);
+  return fallback ? { unitKey: fallback[0], facts: fallback[1] } : null;
+}
+
 /**
  * Returns a sorted list (newest first) of fiscal years that have annual 10-K data.
  */
@@ -303,7 +348,7 @@ export function getAvailableYears(facts: CompanyFacts): number[] {
     const usdFacts = concept.units['USD'];
     if (!usdFacts) continue;
     usdFacts
-      .filter(f => f.form === '10-K' && (f.fp === 'FY' || !f.fp))
+      .filter(isLikelyAnnualFact)
       .forEach(f => years.add(f.fy));
   }
   return Array.from(years).sort((a, b) => b - a);
@@ -348,6 +393,95 @@ export function extractFinancials(facts: CompanyFacts, year?: number): Record<st
         };
         break; // Found a value — stop trying aliases
       }
+    }
+  }
+
+  return result;
+}
+
+function lookupAnnualMetric(
+  facts: CompanyFacts,
+  aliases: string[],
+  year?: number
+): FinancialMetric | null {
+  const usGaap = facts.facts['us-gaap'];
+  if (!usGaap) return null;
+
+  for (const alias of aliases) {
+    const concept = usGaap[alias];
+    if (!concept) continue;
+
+    const preferredUnits = getPreferredUnits(concept);
+    if (!preferredUnits) continue;
+
+    const annualFacts = preferredUnits.facts
+      .filter(isLikelyAnnualFact)
+      .sort((a, b) => b.fy - a.fy);
+
+    const match = year != null
+      ? annualFacts.find(item => item.fy === year)
+      : annualFacts[0];
+
+    if (!match) continue;
+
+    return {
+      label: concept.label,
+      value: match.val,
+      year: match.fy,
+      period: match.fp || 'FY',
+      unit: preferredUnits.unitKey,
+    };
+  }
+
+  return null;
+}
+
+export function extractComparableFinancials(facts: CompanyFacts, year?: number): Record<string, FinancialMetric> {
+  const result = extractFinancials(facts, year);
+
+  const fillIfMissing = (metricKey: string, aliases: string[]) => {
+    if (result[metricKey]) return;
+    const metric = lookupAnnualMetric(facts, aliases, year);
+    if (metric) {
+      result[metricKey] = metric;
+    }
+  };
+
+  for (const [metricKey, aliases] of Object.entries(FINANCIAL_CONCEPTS)) {
+    fillIfMissing(metricKey, aliases);
+  }
+
+  fillIfMissing('TotalDebt', ['LongTermDebtAndCapitalLeaseObligations', 'LongTermDebtAndCapitalLeaseObligationsNoncurrent']);
+  fillIfMissing('AccountsReceivable', ['ReceivablesNetCurrent', 'AccountsNotesAndLoansReceivableNetCurrent']);
+  fillIfMissing('Inventory', ['InventoriesNetOfReserves', 'InventoryFinishedGoods', 'InventoryNetOfAllowancesCustomerAdvancesAndProgressBillings']);
+  fillIfMissing('IntangibleAssets', [
+    'FiniteLivedIntangibleAssetsNet',
+    'IndefiniteLivedIntangibleAssetsExcludingGoodwill',
+    'IndefiniteLivedIntangibleAssetsNetExcludingGoodwill',
+    'OtherIntangibleAssetsNet',
+    'AmortizableIntangibleAssetsNet',
+  ]);
+
+  if (!result.GrossProfit && result.Revenues?.value != null && result.CostOfRevenue?.value != null) {
+    result.GrossProfit = {
+      label: 'Gross Profit (derived)',
+      value: result.Revenues.value - result.CostOfRevenue.value,
+      year: result.Revenues.year,
+      period: result.Revenues.period,
+      unit: result.Revenues.unit,
+    };
+  }
+
+  if (!result.IntangibleAssets && result.Goodwill?.value != null) {
+    const grossIntangibles = lookupAnnualMetric(facts, ['IntangibleAssetsNetIncludingGoodwill'], year);
+    if (grossIntangibles?.value != null) {
+      result.IntangibleAssets = {
+        label: 'Intangible Assets (derived ex. goodwill)',
+        value: grossIntangibles.value - result.Goodwill.value,
+        year: grossIntangibles.year,
+        period: grossIntangibles.period,
+        unit: grossIntangibles.unit,
+      };
     }
   }
 
