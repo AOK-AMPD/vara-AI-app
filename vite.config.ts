@@ -1,5 +1,63 @@
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { buildClaudeRequest, createClaudeMessage } from './api/_lib/claude.js'
+
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    let raw = ''
+
+    req.on('data', chunk => {
+      raw += chunk
+    })
+
+    req.on('end', () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {})
+      } catch (error) {
+        reject(error)
+      }
+    })
+
+    req.on('error', reject)
+  })
+}
+
+function sendJson(res: ServerResponse, status: number, payload: unknown) {
+  res.statusCode = status
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.end(JSON.stringify(payload))
+}
+
+const claudeDevApiPlugin = {
+  name: 'claude-dev-api',
+  configureServer(server: any) {
+    server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+      if (!req.url?.startsWith('/api/claude')) {
+        next()
+        return
+      }
+
+      if (req.method !== 'POST') {
+        sendJson(res, 405, { error: 'Method not allowed.' })
+        return
+      }
+
+      try {
+        const body = await readJsonBody(req)
+        const payload = buildClaudeRequest(body)
+        const result = await createClaudeMessage(payload)
+        sendJson(res, 200, result)
+      } catch (error) {
+        const status = typeof (error as { status?: unknown })?.status === 'number'
+          ? Number((error as { status?: unknown }).status)
+          : 500
+        const message = error instanceof Error ? error.message : 'Claude request failed.'
+        sendJson(res, status, { error: message })
+      }
+    })
+  },
+}
 
 const secProxyOptions = {
   target: 'https://www.sec.gov',
@@ -46,7 +104,7 @@ const eftsProxyOptions = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), claudeDevApiPlugin],
   server: {
     proxy: {
       '/sec-proxy': {

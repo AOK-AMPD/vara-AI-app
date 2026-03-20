@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
+import CompanyLookupField from './CompanyLookupField';
+import SicLookupField from './SicLookupField';
 
 export interface SearchFilters {
   keyword: string;
@@ -258,8 +260,11 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
             {config.showEntityName !== false && (
               <div style={{ minWidth: '180px', flex: '1 1 180px' }}>
                 <label style={labelStyle}>Company / Entity</label>
-                <input value={filters.entityName} onChange={e => onChange({ ...filters, entityName: e.target.value })}
-                  placeholder="e.g. Apple Inc" style={{ ...inputStyle, width: '100%' }} />
+                <CompanyLookupField
+                  value={filters.entityName}
+                  onChange={value => onChange({ ...filters, entityName: value })}
+                  placeholder="Type company or ticker"
+                />
               </div>
             )}
             {config.showDateRange !== false && (
@@ -317,8 +322,11 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
                 {config.showSIC && (
                   <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
                     <label style={labelStyle}>Industry / SIC Code</label>
-                    <input value={filters.sicCode} onChange={e => onChange({ ...filters, sicCode: e.target.value })}
-                      placeholder="e.g. 7372 or Software" style={{ ...inputStyle, width: '100%' }} />
+                    <SicLookupField
+                      value={filters.sicCode}
+                      onChange={value => onChange({ ...filters, sicCode: value })}
+                      placeholder="Browse SIC code or industry"
+                    />
                   </div>
                 )}
                 {config.showAccountant && (
@@ -391,9 +399,12 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
             </CollapsibleSection>
           )}
 
-          {/* Filing Identifiers */}
+          {/* Expert filters */}
           {(config.showAccessionNumber || config.showFileNumber) && (
-            <CollapsibleSection title="Filing Identifiers">
+            <CollapsibleSection title="Expert Filters">
+              <div style={{ color: '#64748B', fontSize: '0.74rem', marginBottom: '10px' }}>
+                Use accession or file number only when you already know the exact filing you want.
+              </div>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                 {config.showAccessionNumber && (
                   <div style={{ minWidth: '200px', flex: '1 1 200px' }}>

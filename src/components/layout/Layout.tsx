@@ -167,8 +167,13 @@ export function Navbar() {
 
       <div className="navbar-actions">
         {!isLanding && (
-          <button className="icon-btn" onClick={() => setChatOpen(true)} title="Open Vara Copilot">
-            <MessageSquare size={20} />
+          <button className="copilot-entry-btn" onClick={() => setChatOpen(true)} title="Open Vara Copilot">
+            <span className="copilot-entry-ping" />
+            <MessageSquare size={18} />
+            <span className="copilot-entry-copy">
+              <strong>Ask Vara Copilot</strong>
+              <span>Natural-language search</span>
+            </span>
           </button>
         )}
         <div className="avatar">JD</div>

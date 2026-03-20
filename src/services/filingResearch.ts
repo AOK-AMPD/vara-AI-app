@@ -386,9 +386,13 @@ function matchesBaseFilters(result: FilingResearchResult, filters: SearchFilters
 
   if (filters.sicCode.trim()) {
     const sicNeedle = filters.sicCode.trim();
+    const sicDigits = sicNeedle.match(/\d{3,4}/)?.[0] || '';
+    const sicText = sicNeedle.replace(/^\d{3,4}\s*[-:]?\s*/, '').trim();
     const matchesSic =
+      (sicDigits ? includesNormalized(result.sic, sicDigits) : false) ||
       includesNormalized(result.sic, sicNeedle) ||
-      includesNormalized(result.sicDescription, sicNeedle);
+      includesNormalized(result.sicDescription, sicNeedle) ||
+      (sicText ? includesNormalized(result.sicDescription, sicText) : false);
     if (!matchesSic) return false;
   }
 
@@ -416,8 +420,14 @@ function matchesSignalFilters(result: FilingResearchResult, filters: SearchFilte
     return false;
   }
 
-  if (filters.accountant.trim() && !includesNormalized(result.auditor, filters.accountant)) {
-    return false;
+  if (filters.accountant.trim()) {
+    const normalizedAccountant = normalize(filters.accountant);
+    const isBigFourFilter = normalizedAccountant === 'big 4' || normalizedAccountant === 'big four';
+    const isBigFourAuditor = ['deloitte', 'pwc', 'ey', 'kpmg'].includes(normalize(result.auditor));
+
+    if (isBigFourFilter ? !isBigFourAuditor : !includesNormalized(result.auditor, filters.accountant)) {
+      return false;
+    }
   }
 
   if (!matchesFilerKeys(filters.acceleratedStatus, result)) {

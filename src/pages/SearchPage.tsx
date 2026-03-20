@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { BellRing, Building2, FileText, Filter, Hash, Loader2, Search, Sparkles } from 'lucide-react';
+import { BellRing, Building2, FileText, Filter, Hash, Loader2, MessageSquare, Search, Sparkles } from 'lucide-react';
 import DataTable, { type ColumnDef } from '../components/tables/DataTable';
 import SearchFilterBar, { defaultSearchFilters, type SearchFilters } from '../components/filters/SearchFilterBar';
 import { aiSummarize } from '../services/geminiApi';
@@ -12,14 +12,16 @@ import {
 } from '../services/filingResearch';
 import { fetchCompanySubmissions, lookupCIK } from '../services/secApi';
 import { useApp } from '../context/AppState';
+import { interpretSearchPrompt } from '../services/searchAssist';
 import './SearchPage.css';
 
 const DEFAULT_FORM_SCOPE = '10-K,10-Q,8-K,DEF 14A,20-F,S-1';
 const SAMPLE_SEARCHES = [
   'ASC 842 adoption w/10 lease',
   'ASR w/5 derivative',
+  'Temporary equity in last 3 years in 10-Q / 10-K audited by Deloitte',
   '"material weakness" AND cybersecurity',
-  'revenue recognition AND "performance obligation"',
+  'I am trying to search for companies that had bifurcated derivatives in accelerated share repurchase agreements in last 5 years',
 ];
 
 const NAME_TO_TICKER: Record<string, string> = {
@@ -81,7 +83,14 @@ export default function SearchPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
-  const { addSavedAlert, savedAlerts, pendingSearchIntent, setPendingSearchIntent, setActiveSearchContext } = useApp();
+  const {
+    addSavedAlert,
+    savedAlerts,
+    pendingSearchIntent,
+    setPendingSearchIntent,
+    setActiveSearchContext,
+    setChatOpen,
+  } = useApp();
 
   const [query, setQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<ResearchSearchMode>('semantic');
@@ -96,6 +105,19 @@ export default function SearchPage() {
   const [trendReport, setTrendReport] = useState('');
   const [trendLoading, setTrendLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [searchInterpretation, setSearchInterpretation] = useState<string[]>([]);
+  const [lastResolvedSearch, setLastResolvedSearch] = useState<{
+    query: string;
+    mode: ResearchSearchMode;
+    filters: SearchFilters;
+  }>({
+    query: initialQuery,
+    mode: 'semantic',
+    filters: {
+      ...defaultSearchFilters,
+      formTypes: ['10-K', '10-Q'],
+    },
+  });
 
   useEffect(() => {
     if (initialQuery) {
@@ -134,10 +156,33 @@ export default function SearchPage() {
     return { companies, topAuditor, topForm };
   }, [results]);
 
-  async function handleSearch(searchQuery = query, overrideFilters = filters, overrideMode = searchMode) {
+  const handleSearch = useCallback(async (searchQuery = query, overrideFilters = filters, overrideMode = searchMode) => {
     const trimmed = searchQuery.trim();
-    if (!trimmed && !overrideFilters.entityName.trim()) return;
+    const interpreted =
+      overrideMode === 'semantic' && trimmed
+        ? interpretSearchPrompt(trimmed, overrideFilters)
+        : {
+            query: trimmed,
+            filters: {
+              ...overrideFilters,
+              formTypes: [...overrideFilters.formTypes],
+              exchange: [...overrideFilters.exchange],
+              acceleratedStatus: [...overrideFilters.acceleratedStatus],
+            },
+            appliedHints: [] as string[],
+          };
 
+    if (
+      !trimmed &&
+      !interpreted.filters.entityName.trim() &&
+      !interpreted.filters.sectionKeywords.trim() &&
+      !interpreted.filters.accessionNumber.trim() &&
+      !interpreted.filters.fileNumber.trim()
+    ) {
+      return;
+    }
+
+    setSearchInterpretation(interpreted.appliedHints);
     setLoading(true);
     setSearched(true);
     setErrorMsg('');
@@ -145,11 +190,11 @@ export default function SearchPage() {
     setTrendReport('');
 
     try {
-      let effectiveQuery = trimmed;
-      let effectiveFilters = { ...overrideFilters };
+      let effectiveQuery = interpreted.query || trimmed;
+      let effectiveFilters = interpreted.filters;
 
-      if (!effectiveFilters.entityName.trim() && trimmed) {
-        const hint = await resolveEntityHint(trimmed);
+      if (!effectiveFilters.entityName.trim() && effectiveQuery) {
+        const hint = await resolveEntityHint(effectiveQuery);
         if (hint.entityName) {
           effectiveFilters = { ...effectiveFilters, entityName: hint.entityName };
           effectiveQuery = hint.query;
@@ -166,6 +211,11 @@ export default function SearchPage() {
       });
 
       setResults(matches);
+      setLastResolvedSearch({
+        query: effectiveQuery || trimmed,
+        mode: overrideMode,
+        filters: effectiveFilters,
+      });
       setActiveSearchContext({
         surface: 'research',
         query: effectiveQuery || trimmed,
@@ -184,7 +234,7 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [filters, query, searchMode, setActiveSearchContext]);
 
   useEffect(() => {
     if (!pendingSearchIntent || pendingSearchIntent.surface !== 'research') return;
@@ -197,6 +247,11 @@ export default function SearchPage() {
       setResults(pendingSearchIntent.prefetchedResults);
       setSearched(true);
       setLoading(false);
+      setLastResolvedSearch({
+        query: pendingSearchIntent.query,
+        mode: pendingSearchIntent.mode,
+        filters: pendingSearchIntent.filters,
+      });
       setErrorMsg(
         pendingSearchIntent.prefetchedResults.length === 0
           ? 'No filings matched that search. Try widening the date range, removing an auditor filter, or broadening the Boolean expression.'
@@ -217,6 +272,17 @@ export default function SearchPage() {
     void handleSearch(pendingSearchIntent.query, pendingSearchIntent.filters, pendingSearchIntent.mode);
     setPendingSearchIntent(null);
   }, [handleSearch, pendingSearchIntent, setActiveSearchContext, setPendingSearchIntent]);
+
+  const buildFilingRouteState = useCallback((row: FilingResearchResult) => ({
+    companyName: row.entityName,
+    filingDate: row.fileDate,
+    formType: row.formType,
+    fileNumber: row.fileNumber,
+    auditor: row.auditor,
+    highlightQuery: lastResolvedSearch.query,
+    highlightMode: lastResolvedSearch.mode,
+    highlightSectionKeywords: lastResolvedSearch.filters.sectionKeywords,
+  }), [lastResolvedSearch]);
 
   async function handleTrendReport() {
     if (results.length === 0) return;
@@ -287,13 +353,7 @@ export default function SearchPage() {
           onClick={event => {
             event.stopPropagation();
             navigate(`/filing/${row.cik}_${row.accessionNumber}_${row.primaryDocument}`, {
-              state: {
-                companyName: row.entityName,
-                filingDate: row.fileDate,
-                formType: row.formType,
-                fileNumber: row.fileNumber,
-                auditor: row.auditor,
-              },
+              state: buildFilingRouteState(row),
             });
           }}
         >
@@ -323,6 +383,30 @@ export default function SearchPage() {
       </div>
 
       <div className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '12px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            padding: '14px 16px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(59,130,246,0.12), rgba(14,165,233,0.06))',
+            border: '1px solid rgba(96,165,250,0.2)',
+          }}
+        >
+          <div>
+            <div style={{ color: '#DBEAFE', fontSize: '0.86rem', fontWeight: 700, marginBottom: '4px' }}>Natural-language search is on</div>
+            <div style={{ color: '#BFDBFE', fontSize: '0.82rem', maxWidth: '760px' }}>
+              Type plain English and Vara will pull out forms, date windows, and auditors before searching EDGAR.
+            </div>
+          </div>
+          <button className="secondary-btn" onClick={() => setChatOpen(true)}>
+            <MessageSquare size={16} /> Ask Vara Copilot
+          </button>
+        </div>
+
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
@@ -368,6 +452,29 @@ export default function SearchPage() {
           </button>
         </form>
 
+        {searchInterpretation.length > 0 && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {searchInterpretation.map(item => (
+              <span
+                key={item}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '4px 10px',
+                  borderRadius: '999px',
+                  background: 'rgba(96,165,250,0.12)',
+                  border: '1px solid rgba(96,165,250,0.24)',
+                  color: '#BFDBFE',
+                  fontSize: '0.76rem',
+                  fontWeight: 600,
+                }}
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        )}
+
         <SearchFilterBar
           config={{
             showEntityName: true,
@@ -408,8 +515,32 @@ export default function SearchPage() {
         </div>
 
         {searchMode === 'boolean' && (
-          <div style={{ padding: '12px 14px', borderRadius: '10px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: '#BFDBFE', fontSize: '0.84rem' }}>
-            Supported operators: <code>AND</code>, <code>OR</code>, <code>NOT</code>, quotes for exact phrases, and proximity using <code>w/#</code>, <code>near/#</code>, or <code>within/#</code>.
+          <div style={{ padding: '14px 16px', borderRadius: '12px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: '#BFDBFE', fontSize: '0.84rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
+              <div style={{ fontWeight: 700 }}>Boolean / Proximity Guide</div>
+              <button
+                type="button"
+                onClick={() => navigate('/support')}
+                style={{ background: 'none', border: 'none', color: '#93C5FD', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}
+              >
+                Open full help
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+              {[
+                { operator: 'AND', meaning: 'Both terms must appear', example: 'temporary AND equity' },
+                { operator: 'OR', meaning: 'Either term can appear', example: 'ASR OR repurchase' },
+                { operator: 'NOT', meaning: 'Exclude a term', example: 'equity NOT mezzanine' },
+                { operator: '"phrase"', meaning: 'Match exact wording', example: '"accelerated share repurchase"' },
+                { operator: 'w/#', meaning: 'Terms near each other', example: 'ASR w/5 derivative' },
+              ].map(item => (
+                <div key={item.operator} style={{ padding: '10px 12px', borderRadius: '10px', background: 'rgba(15,23,42,0.45)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div style={{ color: 'white', fontWeight: 700, marginBottom: '4px' }}>{item.operator}</div>
+                  <div style={{ color: '#BFDBFE', fontSize: '0.78rem', marginBottom: '4px' }}>{item.meaning}</div>
+                  <code style={{ color: '#93C5FD', fontSize: '0.76rem' }}>{item.example}</code>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -459,13 +590,7 @@ export default function SearchPage() {
           data={results}
           pageSize={20}
           onRowClick={row => navigate(`/filing/${row.cik}_${row.accessionNumber}_${row.primaryDocument}`, {
-            state: {
-              companyName: row.entityName,
-              filingDate: row.fileDate,
-              formType: row.formType,
-              fileNumber: row.fileNumber,
-              auditor: row.auditor,
-            },
+            state: buildFilingRouteState(row),
           })}
         />
       ) : searched ? (

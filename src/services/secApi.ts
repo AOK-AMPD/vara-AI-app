@@ -263,6 +263,8 @@ const FINANCIAL_CONCEPTS = {
   'IntangibleAssets': ['IntangibleAssetsNetExcludingGoodwill'],
   'AccountsReceivable': ['AccountsReceivableNetCurrent'],
   'Inventory': ['InventoryNet'],
+  'CurrentAssets': ['AssetsCurrent'],
+  'CurrentLiabilities': ['LiabilitiesCurrent'],
 
   // Cash Flow
   'OperatingCashFlow': ['NetCashProvidedByOperatingActivities'],
@@ -660,12 +662,18 @@ export function computeFinancialRatios(metrics: Record<string, { value: number; 
   const divide = (numerator: number | null, denominator: number | null, multiply = 1) =>
     numerator != null && denominator != null && denominator !== 0 ? (numerator / denominator) * multiply : null;
   const rev = get('Revenues');
-  const gp = get('GrossProfit');
+  const gp = get('GrossProfit') ?? (
+    get('Revenues') != null && get('CostOfRevenue') != null
+      ? (get('Revenues') as number) - (get('CostOfRevenue') as number)
+      : null
+  );
   const oi = get('OperatingIncome');
   const ni = get('NetIncome');
   const ta = get('TotalAssets');
   const eq = get('StockholdersEquity');
   const debt = get('TotalDebt');
+  const currentAssets = get('CurrentAssets');
+  const currentLiabilities = get('CurrentLiabilities');
 
   return {
     grossMargin: divide(gp, rev, 100),
@@ -675,6 +683,6 @@ export function computeFinancialRatios(metrics: Record<string, { value: number; 
     returnOnAssets: divide(ni, ta, 100),
     debtToEquity: divide(debt, eq),
     assetTurnover: divide(rev, ta),
-    currentRatio: null, // Would need current assets/liabilities
+    currentRatio: divide(currentAssets, currentLiabilities),
   };
 }

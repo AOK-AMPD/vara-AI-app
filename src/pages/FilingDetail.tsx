@@ -1,10 +1,13 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Bookmark, MessageSquare, ExternalLink, Columns, Highlighter, Settings2, Download, List, AlertCircle, FileText, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppState';
 import { buildSecDocumentUrl, buildSecProxyUrl, fetchCompanySubmissions, fetchFilingText, type SecSubmission } from '../services/secApi';
 import { createPrintWindow, renderCleanPrintView } from '../services/filingExport';
 import { buildDisclosureDiff, downloadTextFile, extractTablesFromHtml, tablesToCsv, type DisclosureDiffSummary } from '../services/filingDetailTools';
+import { buildHighlightTerms } from '../services/searchAssist';
+import { clearDocumentHighlights, highlightDocumentSearchTerms } from '../services/filingHighlights';
+import type { ResearchSearchMode } from '../services/filingResearch';
 import './FilingDetail.css';
 
 interface TocEntry {
@@ -19,6 +22,9 @@ interface FilingRouteState {
   formType?: string;
   fileNumber?: string;
   auditor?: string;
+  highlightQuery?: string;
+  highlightMode?: ResearchSearchMode;
+  highlightSectionKeywords?: string;
 }
 
 interface ComparableFiling {
@@ -129,6 +135,10 @@ export default function FilingDetail() {
   const currentHtmlRef = useRef<string | null>(null);
   const currentTextRef = useRef<string | null>(null);
   const routeState = (location.state as FilingRouteState | null) || null;
+  const highlightTerms = useMemo(
+    () => buildHighlightTerms(routeState?.highlightQuery || '', routeState?.highlightMode || 'semantic', routeState?.highlightSectionKeywords || ''),
+    [routeState?.highlightMode, routeState?.highlightQuery, routeState?.highlightSectionKeywords]
+  );
 
   const id = location.pathname.replace(/^\/filing\//, '');
 
@@ -489,6 +499,21 @@ export default function FilingDetail() {
       doc.removeEventListener('keyup', captureSelection);
     };
   }, [annotationMode, iframeLoadedToken]);
+
+  useEffect(() => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) {
+      return;
+    }
+
+    clearDocumentHighlights(doc);
+    if (highlightTerms.length === 0) return;
+
+    const marks = highlightDocumentSearchTerms(doc, highlightTerms);
+    if (marks.length > 0) {
+      marks[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [highlightTerms, iframeLoadedToken]);
 
   useEffect(() => {
     if (!pendingFilingSectionLabel || tocEntries.length === 0) return;
