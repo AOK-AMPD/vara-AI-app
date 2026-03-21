@@ -4,7 +4,15 @@ import {
   fetchFilingText,
   searchEdgarFilings,
   type EdgarSearchHit,
+  type SecSubmission,
 } from './secApi';
+import {
+  buildAuditorSearchTerms,
+  canonicalizeAuditorInput,
+  detectAuditorInText,
+  matchesAuditorSelection,
+} from './auditors';
+import { loadSicDirectoryIndex } from './referenceData';
 import { parseSearchHit } from '../hooks/useEdgarSearch';
 import {
   buildBooleanCandidateQueries,
@@ -25,6 +33,7 @@ export interface FilingResearchResult {
   cik: string;
   accessionNumber: string;
   primaryDocument: string;
+  filingPrimaryDocument: string;
   description: string;
   matchSnippet: string;
   matchReason: string;
@@ -60,6 +69,7 @@ interface CompanyResearchMetadata {
   fiscalYearEnd: string;
   headquarters: string;
   fileNumbersByAccession: Record<string, string>;
+  primaryDocumentsByAccession: Record<string, string>;
 }
 
 interface ExecuteSearchOptions {
@@ -76,17 +86,8 @@ function delay(ms: number): Promise<void> {
 }
 
 const companyMetadataCache = new Map<string, Promise<CompanyResearchMetadata | null>>();
+const companySubmissionsCache = new Map<string, Promise<SecSubmission | null>>();
 const filingSignalCache = new Map<string, Promise<FilingSignal>>();
-
-const AUDITOR_PATTERNS = [
-  { label: 'Deloitte', re: /deloitte(?:\s*&\s*touche)?(?:\s+llp)?/i },
-  { label: 'PwC', re: /pricewaterhousecoopers|pwc/i },
-  { label: 'EY', re: /ernst\s*&\s*young|ey\s+llp/i },
-  { label: 'KPMG', re: /kpmg/i },
-  { label: 'BDO', re: /\bbdo\b/i },
-  { label: 'Grant Thornton', re: /grant\s+thornton/i },
-  { label: 'RSM', re: /\brsm\b/i },
-];
 
 const FILER_PATTERNS = [
   { key: 'LAF', label: 'Large Accelerated Filer', re: /large accelerated filer/i },
@@ -318,6 +319,8 @@ function buildServerQuery(rawQuery: string, filters: SearchFilters, mode: Resear
 function buildSemanticCandidateQueries(serverQuery: string, filters: SearchFilters): string[] {
   const baseQuery = serverQuery.trim();
   const queries: string[] = [];
+  const auditorTerms = buildAuditorSearchTerms(filters.accountant);
+  const sectionKeywords = filters.sectionKeywords.trim();
 
   function pushQuery(value: string) {
     const trimmed = value.replace(/\s+/g, ' ').trim();
@@ -327,21 +330,33 @@ function buildSemanticCandidateQueries(serverQuery: string, filters: SearchFilte
     }
   }
 
+  if (baseQuery && auditorTerms.length > 0 && sectionKeywords) {
+    for (const auditorTerm of auditorTerms.slice(0, 3)) {
+      pushQuery(`${baseQuery} ${auditorTerm} ${sectionKeywords}`);
+    }
+  }
+
+  if (baseQuery && auditorTerms.length > 0) {
+    for (const auditorTerm of auditorTerms.slice(0, 4)) {
+      pushQuery(`${baseQuery} ${auditorTerm}`);
+    }
+  }
+
+  if (baseQuery && sectionKeywords) {
+    pushQuery(`${baseQuery} ${sectionKeywords}`);
+  }
+
   pushQuery(baseQuery);
 
-  if (baseQuery && filters.accountant.trim()) {
-    pushQuery(`${baseQuery} ${filters.accountant.trim()}`);
-  }
+  return queries.slice(0, 8);
+}
 
-  if (baseQuery && filters.sectionKeywords.trim()) {
-    pushQuery(`${baseQuery} ${filters.sectionKeywords.trim()}`);
+async function getCompanySubmissionsCached(cik: string): Promise<SecSubmission | null> {
+  if (!cik) return null;
+  if (!companySubmissionsCache.has(cik)) {
+    companySubmissionsCache.set(cik, fetchCompanySubmissions(cik));
   }
-
-  if (baseQuery && filters.accountant.trim() && filters.sectionKeywords.trim()) {
-    pushQuery(`${baseQuery} ${filters.accountant.trim()} ${filters.sectionKeywords.trim()}`);
-  }
-
-  return queries.slice(0, 4);
+  return companySubmissionsCache.get(cik)!;
 }
 
 async function getCompanyMetadata(cik: string): Promise<CompanyResearchMetadata | null> {
@@ -350,15 +365,17 @@ async function getCompanyMetadata(cik: string): Promise<CompanyResearchMetadata 
     companyMetadataCache.set(
       cik,
       (async () => {
-        const submissions = await fetchCompanySubmissions(cik);
+        const submissions = await getCompanySubmissionsCached(cik);
         if (!submissions) {
           return null;
         }
 
         const recent = submissions.filings.recent;
         const fileNumbersByAccession: Record<string, string> = {};
+        const primaryDocumentsByAccession: Record<string, string> = {};
         recent.accessionNumber.forEach((accession, index) => {
           fileNumbersByAccession[accession] = recent.fileNumber[index] || '';
+          primaryDocumentsByAccession[accession] = recent.primaryDocument[index] || '';
         });
 
         const businessAddress = (submissions as any).addresses?.business;
@@ -382,6 +399,7 @@ async function getCompanyMetadata(cik: string): Promise<CompanyResearchMetadata 
           fiscalYearEnd: (submissions as any).fiscalYearEnd || '',
           headquarters,
           fileNumbersByAccession,
+          primaryDocumentsByAccession,
         };
       })()
     );
@@ -391,9 +409,7 @@ async function getCompanyMetadata(cik: string): Promise<CompanyResearchMetadata 
 }
 
 function detectAuditor(text: string): string {
-  const sample = text.slice(0, 20000);
-  const matches = AUDITOR_PATTERNS.filter(pattern => pattern.re.test(sample));
-  return matches.length > 0 ? matches[0].label : '';
+  return detectAuditorInText(text);
 }
 
 function detectAcceleratedStatus(text: string): string {
@@ -404,17 +420,38 @@ function detectAcceleratedStatus(text: string): string {
   return Array.from(new Set(statuses)).join(', ');
 }
 
-async function getFilingSignal(cik: string, accessionNumber: string, primaryDocument: string): Promise<FilingSignal> {
-  const cacheKey = `${cik}:${accessionNumber}:${primaryDocument}`;
+async function getFilingSignal(
+  cik: string,
+  accessionNumber: string,
+  primaryDocument: string,
+  filingPrimaryDocument: string
+): Promise<FilingSignal> {
+  const cacheKey = `${cik}:${accessionNumber}:${primaryDocument}:${filingPrimaryDocument}`;
   if (!filingSignalCache.has(cacheKey)) {
     filingSignalCache.set(
       cacheKey,
       (async () => {
         const text = await fetchFilingText(cik, accessionNumber, primaryDocument);
+        let parentText = '';
+        let auditor = canonicalizeAuditorInput(detectAuditor(text));
+        let acceleratedStatus = detectAcceleratedStatus(text);
+
+        if (filingPrimaryDocument && filingPrimaryDocument !== primaryDocument) {
+          parentText = await fetchFilingText(cik, accessionNumber, filingPrimaryDocument);
+
+          if (!auditor) {
+            auditor = canonicalizeAuditorInput(detectAuditor(parentText));
+          }
+
+          if (!acceleratedStatus) {
+            acceleratedStatus = detectAcceleratedStatus(parentText);
+          }
+        }
+
         return {
-          text,
-          auditor: detectAuditor(text),
-          acceleratedStatus: detectAcceleratedStatus(text),
+          text: text || parentText,
+          auditor,
+          acceleratedStatus,
         };
       })()
     );
@@ -423,8 +460,10 @@ async function getFilingSignal(cik: string, accessionNumber: string, primaryDocu
   return filingSignalCache.get(cacheKey)!;
 }
 
-function getSignalCacheKey(result: Pick<FilingResearchResult, 'cik' | 'accessionNumber' | 'primaryDocument'>): string {
-  return `${result.cik}:${result.accessionNumber}:${result.primaryDocument}`;
+function getSignalCacheKey(
+  result: Pick<FilingResearchResult, 'cik' | 'accessionNumber' | 'primaryDocument' | 'filingPrimaryDocument'>
+): string {
+  return `${result.cik}:${result.accessionNumber}:${result.primaryDocument}:${result.filingPrimaryDocument}`;
 }
 
 function matchesEntityFilter(result: FilingResearchResult, entityName: string): boolean {
@@ -611,17 +650,25 @@ function matchesBaseFilters(result: FilingResearchResult, filters: SearchFilters
   return true;
 }
 
+function requiresCompanyMetadata(filters: SearchFilters): boolean {
+  return Boolean(
+    filters.entityName.trim() ||
+    filters.fileNumber.trim() ||
+    filters.sicCode.trim() ||
+    filters.stateOfInc.trim() ||
+    filters.headquarters.trim() ||
+    filters.exchange.length > 0 ||
+    filters.fiscalYearEnd.trim()
+  );
+}
+
 function matchesSignalFilters(result: FilingResearchResult, filters: SearchFilters, filingText: string): boolean {
   if (filters.sectionKeywords.trim() && !matchesSectionKeywords(filingText, filters.sectionKeywords)) {
     return false;
   }
 
   if (filters.accountant.trim()) {
-    const normalizedAccountant = normalize(filters.accountant);
-    const isBigFourFilter = normalizedAccountant === 'big 4' || normalizedAccountant === 'big four';
-    const isBigFourAuditor = ['deloitte', 'pwc', 'ey', 'kpmg'].includes(normalize(result.auditor));
-
-    if (isBigFourFilter ? !isBigFourAuditor : !includesNormalized(result.auditor, filters.accountant)) {
+    if (!matchesAuditorSelection(result.auditor, filters.accountant)) {
       return false;
     }
   }
@@ -645,6 +692,7 @@ function mapSearchHit(hit: EdgarSearchHit): FilingResearchResult {
     cik: base.cik,
     accessionNumber: base.accessionNumber,
     primaryDocument: base.primaryDocument,
+    filingPrimaryDocument: base.primaryDocument,
     description: base.description,
     matchSnippet: '',
     matchReason: '',
@@ -677,13 +725,52 @@ async function hydrateCompanyMetadata(result: FilingResearchResult): Promise<Fil
     result.fiscalYearEnd = metadata.fiscalYearEnd || result.fiscalYearEnd;
     result.headquarters = metadata.headquarters || result.headquarters;
     result.fileNumber = metadata.fileNumbersByAccession[result.accessionNumber] || result.fileNumber;
+    result.filingPrimaryDocument = metadata.primaryDocumentsByAccession[result.accessionNumber] || result.filingPrimaryDocument;
   }
 
   return result;
 }
 
+async function hydrateCompanyMetadataBatch(
+  results: FilingResearchResult[],
+  concurrency = 4
+): Promise<FilingResearchResult[]> {
+  const hydrated = [...results];
+
+  for (let index = 0; index < hydrated.length; index += concurrency) {
+    const chunk = hydrated.slice(index, Math.min(index + concurrency, hydrated.length));
+    await Promise.all(chunk.map(result => hydrateCompanyMetadata(result)));
+
+    if (index + concurrency < hydrated.length) {
+      await delay(120);
+    }
+  }
+
+  return hydrated;
+}
+
+async function hydrateLightweightMetadata(results: FilingResearchResult[]): Promise<FilingResearchResult[]> {
+  const needsSicLookup = results.some(result => result.sic && !result.sicDescription);
+  if (!needsSicLookup) {
+    return results;
+  }
+
+  const sicIndex = await loadSicDirectoryIndex();
+  return results.map(result => {
+    if (!result.sicDescription && result.sic) {
+      result.sicDescription = sicIndex[result.sic]?.title || result.sicDescription;
+    }
+    return result;
+  });
+}
+
 async function hydrateResultSignals(result: FilingResearchResult): Promise<FilingSignal> {
-  const signal = await getFilingSignal(result.cik, result.accessionNumber, result.primaryDocument);
+  const signal = await getFilingSignal(
+    result.cik,
+    result.accessionNumber,
+    result.primaryDocument,
+    result.filingPrimaryDocument
+  );
   result.auditor = signal.auditor;
   result.acceleratedStatus = signal.acceleratedStatus;
   return signal;
@@ -712,7 +799,21 @@ export async function executeFilingResearchSearch({
   const formTypes = normalizeFormTypes(filters, defaultForms);
   const formScope = parseFormScope(formTypes);
   const preferRelevance = Boolean((query || filters.keyword).trim() || filters.sectionKeywords.trim());
-  const candidateLimit = Math.max(limit * (mode === 'boolean' ? 5 : 3), mode === 'boolean' ? 220 : 90);
+  const semanticAuditorSearch = mode === 'semantic' && Boolean(filters.accountant.trim());
+  const needsCompanyMetadata = requiresCompanyMetadata(filters);
+  const requestedLimit = Math.max(limit, 1);
+  const displayLimit =
+    mode === 'boolean'
+      ? Math.min(requestedLimit, 200)
+      : semanticAuditorSearch
+        ? Math.min(requestedLimit, 500)
+        : Math.min(requestedLimit, 300);
+  const candidateLimit =
+    mode === 'boolean'
+      ? Math.min(Math.max(displayLimit * 2, 220), 320)
+      : semanticAuditorSearch
+        ? Math.min(Math.max(displayLimit + 180, 450), 700)
+        : Math.min(Math.max(displayLimit + 80, 180), 320);
   const needsTextFiltering = requiresTextFiltering(filters, query, mode);
   const shouldHydrateSignals = hydrateTextSignals || needsTextFiltering;
   const booleanServerQueries = mode === 'boolean' ? buildBooleanCandidateQueries(query || filters.keyword).slice(0, 5) : [];
@@ -727,6 +828,18 @@ export async function executeFilingResearchSearch({
   let lastSearchError: Error | null = null;
 
   const filteredServerQueries = serverQueries.filter(Boolean);
+  const perQueryResultLimit =
+    mode === 'boolean'
+      ? Math.min(Math.max(candidateLimit, 120), 240)
+      : semanticAuditorSearch
+        ? Math.min(Math.max(candidateLimit, 320), 500)
+        : Math.min(Math.max(candidateLimit, 140), 220);
+  const collectionTarget =
+    mode === 'boolean'
+      ? candidateLimit * 2
+      : semanticAuditorSearch
+        ? Math.min(candidateLimit + 180, 900)
+        : candidateLimit;
 
   for (const [queryIndex, candidateQuery] of filteredServerQueries.entries()) {
     try {
@@ -735,7 +848,8 @@ export async function executeFilingResearchSearch({
         formTypes,
         filters.dateFrom || undefined,
         filters.dateTo || undefined,
-        filters.entityName || undefined
+        filters.entityName || undefined,
+        perQueryResultLimit
       );
 
       const queryPriority = filteredServerQueries.length - queryIndex;
@@ -755,7 +869,7 @@ export async function executeFilingResearchSearch({
         }
       }
 
-      if (hitMap.size >= candidateLimit * (mode === 'boolean' ? 2 : 1)) {
+      if (hitMap.size >= collectionTarget) {
         break;
       }
 
@@ -782,25 +896,34 @@ export async function executeFilingResearchSearch({
       return b.score - a.score;
     })
     .map(entry => entry.hit)
-    .slice(0, candidateLimit * (mode === 'boolean' ? 2 : 1));
+    .slice(0, collectionTarget);
   let results = uniqueById(hits.map(mapSearchHit)).slice(0, candidateLimit);
 
-  results = await Promise.all(results.map(result => hydrateCompanyMetadata(result)));
+  if (needsCompanyMetadata) {
+    results = await hydrateCompanyMetadataBatch(results);
+  }
   results = results.filter(result => matchesBaseFilters(result, filters, formScope));
   results = sortResearchResults(results, preferRelevance);
 
   if (!shouldHydrateSignals) {
-    return results.slice(0, limit);
+    return results.slice(0, displayLimit);
   }
 
   const signalMap = new Map<string, FilingSignal>();
   const filteredResults: FilingResearchResult[] = [];
   const batchSize = mode === 'boolean' ? 4 : 6;
-  const bufferedTarget = Math.max(limit, Math.min(limit * 2, mode === 'boolean' ? 24 : 40));
+  const bufferedTarget =
+    mode === 'boolean'
+      ? Math.min(displayLimit, 120)
+      : semanticAuditorSearch
+        ? displayLimit
+        : Math.min(displayLimit, 200);
   const maxValidationCandidates =
     mode === 'boolean'
-      ? Math.min(results.length, Math.max(limit + 30, 80))
-      : results.length;
+      ? Math.min(results.length, Math.max(bufferedTarget + 40, 120))
+      : semanticAuditorSearch
+        ? Math.min(results.length, Math.max(bufferedTarget + 120, 320))
+        : Math.min(results.length, Math.max(bufferedTarget + 60, 180));
   const parsedBooleanQuery = mode === 'boolean' ? parseBooleanQuery(query) : { expression: null };
 
   for (let index = 0; index < maxValidationCandidates; index += batchSize) {
@@ -839,8 +962,13 @@ export async function executeFilingResearchSearch({
   }
 
   results = filteredResults;
+  const finalResults = sortResearchResults(results, preferRelevance).slice(0, displayLimit);
 
-  return sortResearchResults(results, preferRelevance).slice(0, limit);
+  if (needsCompanyMetadata) {
+    return finalResults;
+  }
+
+  return hydrateLightweightMetadata(finalResults);
 }
 
 export async function buildSearchTrendSummary(

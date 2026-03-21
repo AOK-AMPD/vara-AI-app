@@ -43,6 +43,7 @@ import './SearchPage.css';
 
 const DEFAULT_FORM_SCOPE = '10-K,10-Q,8-K,8-K/A,DEF 14A,20-F,6-K,S-1';
 const LEGACY_DEFAULT_FORM_SCOPE = ['10-K', '10-Q'];
+const RESEARCH_RESULT_LIMIT = 500;
 const SAMPLE_SEARCHES = [
   'ASC 842 adoption w/10 lease',
   'ASR w/5 derivative',
@@ -390,7 +391,7 @@ export default function SearchPage() {
         filters: effectiveFilters,
         mode: effectiveMode,
         defaultForms: DEFAULT_FORM_SCOPE,
-        limit: 50,
+        limit: RESEARCH_RESULT_LIMIT,
         hydrateTextSignals: true,
       });
 

@@ -7,6 +7,7 @@ const ROOT_URL = process.env.SEARCH_TEST_ROOT_URL || 'http://127.0.0.1:4173';
 const OUTPUT_DIR = path.resolve(process.cwd(), 'audit-output', 'search-regression');
 const SCREENSHOT_DIR = path.join(OUTPUT_DIR, 'screenshots');
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const CDP_PORT = Number(process.env.SEARCH_TEST_CDP_PORT || (9223 + Math.floor(Math.random() * 200)));
 
 fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
@@ -166,7 +167,7 @@ async function launchChrome() {
       '--disable-gpu',
       '--hide-scrollbars',
       '--allow-pre-commit-input',
-      '--remote-debugging-port=9223',
+      `--remote-debugging-port=${CDP_PORT}`,
       `--user-data-dir=${userDataDir}`,
       'about:blank',
     ],
@@ -175,7 +176,7 @@ async function launchChrome() {
 
   for (let attempt = 0; attempt < 30; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:9223/json/version');
+      const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
       const version = await response.json();
       return {
         process: proc,

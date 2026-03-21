@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppProvider } from './context/AppState';
 import { Layout } from './components/layout/Layout';
 import { AIQnAPanel } from './components/AIQnAPanel';
+import { clerkEnabled } from './services/auth';
 
 import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/Dashboard';
@@ -36,13 +38,37 @@ import ADVRegistrations from './pages/ADVRegistrations';
 import APIPortal from './pages/APIPortal';
 import SupportCenter from './pages/SupportCenter';
 
+function WorkspaceLayout() {
+  return <Layout />;
+}
+
+function ProtectedWorkspaceLayout() {
+  if (!clerkEnabled) {
+    return <Layout />;
+  }
+
+  return (
+    <>
+      <SignedIn>
+        <Layout />
+      </SignedIn>
+      <SignedOut>
+        <Navigate to="/" replace />
+      </SignedOut>
+    </>
+  );
+}
+
 function App() {
   return (
     <AppProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Layout />}>
+          <Route path="/" element={<WorkspaceLayout />}>
             <Route index element={<LandingPage />} />
+          </Route>
+
+          <Route element={<ProtectedWorkspaceLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="filing/*" element={<FilingDetail />} />

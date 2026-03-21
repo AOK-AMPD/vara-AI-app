@@ -6,11 +6,16 @@ import path from 'node:path';
 const ROOT_URL = process.env.SEARCH_TEST_ROOT_URL || 'http://127.0.0.1:4173';
 const OUTPUT_FILE = path.resolve(process.cwd(), 'audit-output', 'search-regression', 'search-service-debug.json');
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+const CDP_PORT = Number(process.env.SEARCH_DEBUG_CDP_PORT || (9224 + Math.floor(Math.random() * 200)));
 const DEBUG_QUERY = process.env.SEARCH_DEBUG_QUERY || 'car parking w/10 installation';
 const DEBUG_MODE = process.env.SEARCH_DEBUG_MODE || 'boolean';
 const DEBUG_FORMS = process.env.SEARCH_DEBUG_FORMS || '10-K,10-Q,8-K,8-K/A,DEF 14A,20-F,6-K,S-1';
 const DEBUG_DATE_FROM = process.env.SEARCH_DEBUG_DATE_FROM || '2020-01-01';
 const DEBUG_DATE_TO = process.env.SEARCH_DEBUG_DATE_TO || '2026-03-20';
+const DEBUG_ACCOUNTANT = process.env.SEARCH_DEBUG_ACCOUNTANT || '';
+const DEBUG_SECTION_KEYWORDS = process.env.SEARCH_DEBUG_SECTION_KEYWORDS || '';
+const DEBUG_ENTITY = process.env.SEARCH_DEBUG_ENTITY || '';
+const DEBUG_LIMIT = Number(process.env.SEARCH_DEBUG_LIMIT || '50');
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -136,7 +141,7 @@ async function launchChrome() {
     [
       '--headless=new',
       '--disable-gpu',
-      '--remote-debugging-port=9224',
+      `--remote-debugging-port=${CDP_PORT}`,
       `--user-data-dir=${userDataDir}`,
       'about:blank',
     ],
@@ -145,7 +150,7 @@ async function launchChrome() {
 
   for (let attempt = 0; attempt < 30; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:9224/json/version');
+      const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
       const version = await response.json();
       return {
         process: proc,
@@ -203,19 +208,22 @@ try {
         const formScope = ${JSON.stringify(DEBUG_FORMS)};
         const dateFrom = ${JSON.stringify(DEBUG_DATE_FROM)};
         const dateTo = ${JSON.stringify(DEBUG_DATE_TO)};
+        const accountant = ${JSON.stringify(DEBUG_ACCOUNTANT)};
+        const sectionKeywords = ${JSON.stringify(DEBUG_SECTION_KEYWORDS)};
+        const entityName = ${JSON.stringify(DEBUG_ENTITY)};
         const baseFilters = {
           keyword: '',
           dateFrom,
           dateTo,
-          entityName: '',
-          formTypes: [],
-          sectionKeywords: '',
+          entityName,
+          formTypes: formScope ? formScope.split(',').map(value => value.trim()).filter(Boolean) : [],
+          sectionKeywords,
           sicCode: '',
           stateOfInc: '',
           headquarters: '',
           exchange: [],
           acceleratedStatus: [],
-          accountant: '',
+          accountant,
           accessionNumber: '',
           fileNumber: '',
           fiscalYearEnd: '',
@@ -298,7 +306,7 @@ try {
           filters: baseFilters,
           mode,
           defaultForms: formScope,
-          limit: 50,
+          limit: DEBUG_LIMIT,
           hydrateTextSignals: true,
         });
 
@@ -337,7 +345,8 @@ try {
   );
 
   fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(JSON.parse(report), null, 2));
+  const parsedReport = typeof report === 'string' ? JSON.parse(report) : report;
+  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(parsedReport, null, 2));
   console.log(`Search service debug written to ${OUTPUT_FILE}`);
   await session.close();
 } finally {

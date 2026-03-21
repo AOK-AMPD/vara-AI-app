@@ -182,15 +182,26 @@ export interface SecSubmission {
 export async function fetchCompanySubmissions(cik: string): Promise<SecSubmission | null> {
   const paddedCik = cik.padStart(10, '0');
   try {
-    const response = await fetch(buildSecDataUrl(`submissions/CIK${paddedCik}.json`), {
-      headers: getHeaders()
-    });
-    
-    if (!response.ok) {
-        throw new Error(`SEC API Error: ${response.statusText}`);
+    let lastResponse: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(buildSecDataUrl(`submissions/CIK${paddedCik}.json`), {
+        headers: getHeaders()
+      });
+      lastResponse = response;
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      if ((response.status === 403 || response.status === 429 || response.status >= 500) && attempt < 2) {
+        await delay(500 * (attempt + 1));
+        continue;
+      }
+
+      throw new Error(`SEC API Error: ${response.status} ${response.statusText}`);
     }
-    
-    return await response.json();
+
+    throw new Error(`SEC API Error: ${lastResponse?.status || 0} ${lastResponse?.statusText || 'Unknown error'}`);
   } catch (error) {
     console.error('Failed to fetch SEC Submissions:', error);
     return null;
@@ -536,41 +547,82 @@ export async function searchEdgarFilings(
   forms: string = 'S-1',
   startDate?: string,
   endDate?: string,
-  entityName?: string
+  entityName?: string,
+  maxResults = 100
 ): Promise<EdgarSearchHit[]> {
-  const params = new URLSearchParams({
+  const baseParams = new URLSearchParams({
     q: query,
     forms: forms,
     dateRange: 'custom',
     startdt: startDate || '2020-01-01',
     enddt: endDate || new Date().toISOString().split('T')[0],
   });
-  if (entityName) params.set('entityName', entityName);
+  if (entityName) baseParams.set('entityName', entityName);
 
-  const cacheKey = params.toString();
+  const pageSize = Math.min(Math.max(maxResults, 1), 100);
+  const cacheKey = `${baseParams.toString()}|max=${maxResults}`;
   if (!edgarSearchCache.has(cacheKey)) {
     edgarSearchCache.set(cacheKey, (async () => {
       try {
-        let lastResponse: Response | null = null;
-        for (let attempt = 0; attempt < 2; attempt += 1) {
-          const response = await fetch(buildSecEftsUrl('LATEST/search-index', params), {
-            headers: getHeaders()
-          });
-          lastResponse = response;
-          if (response.ok) {
-            const data: EdgarSearchResult = await response.json();
-            return data.hits?.hits || [];
+        const results: EdgarSearchHit[] = [];
+        const seenIds = new Set<string>();
+        let totalHits = Number.POSITIVE_INFINITY;
+
+        for (let offset = 0; offset < maxResults && results.length < maxResults && offset < totalHits; offset += pageSize) {
+          const params = new URLSearchParams(baseParams);
+          params.set('from', String(offset));
+          params.set('size', String(Math.min(pageSize, maxResults - results.length)));
+
+          let lastResponse: Response | null = null;
+          let pageHits: EdgarSearchHit[] = [];
+          let totalForPage = Number.POSITIVE_INFINITY;
+
+          for (let attempt = 0; attempt < 2; attempt += 1) {
+            const response = await fetch(buildSecEftsUrl('LATEST/search-index', params), {
+              headers: getHeaders()
+            });
+            lastResponse = response;
+            if (response.ok) {
+              const data: EdgarSearchResult = await response.json();
+              pageHits = data.hits?.hits || [];
+              totalForPage = data.hits?.total?.value || pageHits.length;
+              break;
+            }
+
+            if ((response.status === 403 || response.status === 429 || response.status >= 500) && attempt === 0) {
+              await delay(700);
+              continue;
+            }
+
+            throw new Error(`EDGAR Search Error: ${response.status} ${response.statusText}`);
           }
 
-          if ((response.status === 403 || response.status === 429) && attempt === 0) {
-            await delay(700);
-            continue;
+          if (!lastResponse?.ok) {
+            throw new Error(`EDGAR Search Error: ${lastResponse?.status || 0} ${lastResponse?.statusText || 'Unknown error'}`);
           }
 
-          throw new Error(`EDGAR Search Error: ${response.status} ${response.statusText}`);
+          totalHits = Math.min(totalHits, totalForPage);
+          let addedThisPage = 0;
+          for (const hit of pageHits) {
+            if (seenIds.has(hit._id)) continue;
+            seenIds.add(hit._id);
+            results.push(hit);
+            addedThisPage += 1;
+            if (results.length >= maxResults) {
+              break;
+            }
+          }
+
+          if (pageHits.length < pageSize || addedThisPage === 0) {
+            break;
+          }
+
+          if (offset + pageSize < maxResults) {
+            await delay(180);
+          }
         }
 
-        throw new Error(`EDGAR Search Error: ${lastResponse?.status || 0} ${lastResponse?.statusText || 'Unknown error'}`);
+        return results;
       } catch (error) {
         edgarSearchCache.delete(cacheKey);
         console.error('EDGAR search failed:', error);
@@ -638,7 +690,7 @@ export async function fetchFilingText(cik: string, accessionNumber: string, prim
             return extractDocumentTextFromHtml(html);
           }
 
-          if ((response.status === 403 || response.status === 429) && attempt === 0) {
+          if ((response.status === 403 || response.status === 429 || response.status >= 500) && attempt === 0) {
             await delay(500);
             continue;
           }

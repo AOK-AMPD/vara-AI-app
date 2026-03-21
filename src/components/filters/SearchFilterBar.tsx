@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import CompanyLookupField from './CompanyLookupField';
 import SicLookupField from './SicLookupField';
+import AuditorLookupField from './AuditorLookupField';
 
 export interface SearchFilters {
   keyword: string;
@@ -357,8 +358,11 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
                 {config.showAccountant && (
                   <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
                     <label style={labelStyle}>Accountant / Auditor</label>
-                    <input value={filters.accountant} onChange={e => onChange({ ...filters, accountant: e.target.value })}
-                      placeholder="e.g. Deloitte, PwC" style={{ ...inputStyle, width: '100%' }} />
+                    <AuditorLookupField
+                      value={filters.accountant}
+                      onChange={value => onChange({ ...filters, accountant: value })}
+                      placeholder="Select auditor"
+                    />
                   </div>
                 )}
                 {config.showFiscalYearEnd && (

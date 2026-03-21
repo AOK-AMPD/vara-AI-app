@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   Search, LayoutDashboard, BarChart2, MessageSquare, Menu,
@@ -8,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppState';
 import { VaraLogo } from '../../pages/LandingPage';
+import { clerkEnabled } from '../../services/auth';
 import './Layout.css';
 
 export function Sidebar() {
@@ -176,7 +178,36 @@ export function Navbar() {
             </span>
           </button>
         )}
-        <div className="avatar">JD</div>
+        {clerkEnabled ? (
+          <>
+            <SignedOut>
+              <div className="nav-auth-actions">
+                <SignInButton>
+                  <button className="nav-auth-btn nav-auth-btn-secondary" type="button">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <SignUpButton>
+                  <button className="nav-auth-btn nav-auth-btn-primary" type="button">
+                    Get Started
+                  </button>
+                </SignUpButton>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: 'vara-clerk-avatar',
+                  },
+                }}
+              />
+            </SignedIn>
+          </>
+        ) : (
+          <div className="avatar">JD</div>
+        )}
       </div>
     </header>
   );

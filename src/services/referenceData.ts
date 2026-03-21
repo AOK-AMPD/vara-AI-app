@@ -8,6 +8,7 @@ export interface SicDirectoryEntry {
 
 let sicDirectoryCache: SicDirectoryEntry[] | null = null;
 let sicDirectoryPromise: Promise<SicDirectoryEntry[]> | null = null;
+let sicDirectoryIndexCache: Record<string, SicDirectoryEntry> | null = null;
 
 function parseSicTable(doc: Document): SicDirectoryEntry[] {
   const entries: SicDirectoryEntry[] = [];
@@ -60,4 +61,16 @@ export async function loadSicDirectory(): Promise<SicDirectoryEntry[]> {
   })();
 
   return sicDirectoryPromise;
+}
+
+export async function loadSicDirectoryIndex(): Promise<Record<string, SicDirectoryEntry>> {
+  if (sicDirectoryIndexCache) return sicDirectoryIndexCache;
+
+  const entries = await loadSicDirectory();
+  sicDirectoryIndexCache = entries.reduce<Record<string, SicDirectoryEntry>>((acc, entry) => {
+    acc[entry.code] = entry;
+    return acc;
+  }, {});
+
+  return sicDirectoryIndexCache;
 }

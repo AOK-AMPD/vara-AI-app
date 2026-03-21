@@ -1,9 +1,9 @@
 import { defaultSearchFilters, type SearchFilters } from '../components/filters/SearchFilterBar';
+import { canonicalizeAuditorInput, findAuditorMention } from './auditors';
 import type { AgentAction, AgentContextSnapshot, AgentPlan, AgentToolName } from '../types/agent';
 import type { ResearchSearchMode } from './filingResearch';
 
 const FORM_TYPES = ['10-K', '10-Q', '8-K', 'DEF 14A', '20-F', '6-K', 'S-1'] as const;
-const AUDITORS = ['Deloitte', 'PwC', 'EY', 'KPMG', 'BDO', 'Grant Thornton', 'RSM'];
 const LATEST_FILING_PATTERN = '(?:latest|most\\s+recent|newest|current)';
 
 function makeAction(type: AgentToolName, title: string, input: Record<string, unknown>, reason?: string): AgentAction {
@@ -65,11 +65,10 @@ function extractDateWindow(prompt: string): { dateFrom?: string; dateTo?: string
 function extractAuditor(prompt: string, context: AgentContextSnapshot): string {
   const sameAuditor = /same[-\s]?auditor|same big 4|same big four/i.test(prompt);
   if (sameAuditor && context.filing?.auditor) {
-    return context.filing.auditor;
+    return canonicalizeAuditorInput(context.filing.auditor);
   }
 
-  const explicit = AUDITORS.find(auditor => new RegExp(`\\b${auditor.replace(/\s+/g, '\\s+')}\\b`, 'i').test(prompt));
-  return explicit || '';
+  return canonicalizeAuditorInput(findAuditorMention(prompt)?.label || '');
 }
 
 function extractSic(prompt: string, context: AgentContextSnapshot): string {

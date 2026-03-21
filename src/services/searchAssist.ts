@@ -1,5 +1,6 @@
 import type { SearchFilters } from '../components/filters/SearchFilterBar';
 import type { ResearchSearchMode } from './filingResearch';
+import { canonicalizeAuditorInput, findAuditorMention, stripAuditorMentions } from './auditors';
 import { buildCandidateQueryFromBoolean } from '../utils/booleanSearch';
 
 export interface SearchInterpretation {
@@ -8,7 +9,6 @@ export interface SearchInterpretation {
   appliedHints: string[];
 }
 
-const AUDITORS = ['Deloitte', 'PwC', 'EY', 'KPMG', 'BDO', 'Grant Thornton', 'RSM'];
 const FORM_PATTERNS: Array<{ form: string; re: RegExp }> = [
   { form: '10-K', re: /\b10[\s-]?k\b/gi },
   { form: '10-Q', re: /\b10[\s-]?q\b/gi },
@@ -141,14 +141,11 @@ export function interpretSearchPrompt(rawPrompt: string, filters: SearchFilters)
     }
   }
 
-  const auditor = AUDITORS.find(name => new RegExp(`\\b${name.replace(/\s+/g, '\\s+')}\\b`, 'i').test(working));
+  const auditor = findAuditorMention(working);
   if (auditor) {
-    nextFilters.accountant = auditor;
-    appliedHints.push(`Auditor: ${auditor}`);
-    working = working
-      .replace(new RegExp(`\\baudited\\s+by\\s+${auditor.replace(/\s+/g, '\\s+')}`, 'ig'), ' ')
-      .replace(new RegExp(`\\bauditor\\s*:?\\s*${auditor.replace(/\s+/g, '\\s+')}`, 'ig'), ' ')
-      .replace(new RegExp(`\\b${auditor.replace(/\s+/g, '\\s+')}\\b`, 'ig'), ' ');
+    nextFilters.accountant = canonicalizeAuditorInput(auditor.label);
+    appliedHints.push(`Auditor: ${nextFilters.accountant}`);
+    working = stripAuditorMentions(working, auditor);
   } else if (/\bbig\s+4\b|\bbig\s+four\b/i.test(working)) {
     nextFilters.accountant = 'Big 4';
     appliedHints.push('Auditor: Big 4');
