@@ -44,6 +44,8 @@ import './SearchPage.css';
 const DEFAULT_FORM_SCOPE = '10-K,10-Q,8-K,8-K/A,DEF 14A,20-F,6-K,S-1';
 const LEGACY_DEFAULT_FORM_SCOPE = ['10-K', '10-Q'];
 const RESEARCH_RESULT_LIMIT = 500;
+const INITIAL_RESEARCH_RESULT_LIMIT = 80;
+const INITIAL_BOOLEAN_RESULT_LIMIT = 40;
 const SAMPLE_SEARCHES = [
   'ASC 842 adoption w/10 lease',
   'ASR w/5 derivative',
@@ -184,6 +186,64 @@ function hasOnlyLegacyDefaultFormScope(filters: SearchFilters): boolean {
   );
 }
 
+function shouldHydrateSearchSignals(mode: ResearchSearchMode, filters: SearchFilters): boolean {
+  if (mode === 'boolean') {
+    return true;
+  }
+
+  return Boolean(filters.accountant.trim() || filters.sectionKeywords.trim());
+}
+
+function buildResearchSession(
+  id: string,
+  query: string,
+  mode: ResearchSearchMode,
+  filters: SearchFilters,
+  results: FilingResearchResult[],
+  interpretation: string[],
+  resolvedSearch: { query: string; mode: ResearchSearchMode; filters: SearchFilters },
+  createdAt: string,
+  options: { isRefining?: boolean; errorMsg?: string; selectedResultId?: string | null } = {}
+): ResearchSearchSession {
+  const selectedResultId =
+    options.selectedResultId && results.some(result => result.id === options.selectedResultId)
+      ? options.selectedResultId
+      : results[0]?.id || null;
+
+  return {
+    id,
+    title: buildResearchSessionTitle(query, filters),
+    query,
+    mode,
+    filters,
+    results,
+    isRefining: Boolean(options.isRefining),
+    searched: true,
+    errorMsg: options.errorMsg || '',
+    interpretation,
+    resolvedSearch,
+    selectedResultId,
+    createdAt,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+function buildAuditorDisplayLabel(
+  auditor: string,
+  filters: SearchFilters,
+  isRefining: boolean
+): string {
+  if (auditor.trim()) {
+    return auditor;
+  }
+
+  if (isRefining && filters.accountant.trim()) {
+    return 'Validating auditor...';
+  }
+
+  return 'Auditor unavailable';
+}
+
 export default function SearchPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -230,7 +290,14 @@ export default function SearchPage() {
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const bootstrappedInitialSearch = useRef(false);
   const handledAlertIdsRef = useRef<Set<string>>(new Set());
+  const activeSessionIdRef = useRef<string | null>(null);
+  const pendingRefinementKeysRef = useRef<Map<string, string>>(new Map());
+  const sessionsRef = useRef<ResearchSearchSession[]>(sessions);
   const handleSearchRef = useRef<((searchQuery?: string, overrideFilters?: SearchFilters, overrideMode?: ResearchSearchMode, options?: { preferredSessionId?: string; replaceUrl?: boolean }) => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
 
   useEffect(() => {
     saveResearchSessions(sessions);
@@ -244,6 +311,7 @@ export default function SearchPage() {
 
   const displayResults = activeSession?.results || results;
   const activeResolvedSearch = activeSession?.resolvedSearch || lastResolvedSearch;
+  const isRefiningResults = Boolean(activeSession?.isRefining);
   const previewHighlightTerms = useMemo(
     () => buildHighlightTerms(
       activeResolvedSearch.query,
@@ -279,7 +347,10 @@ export default function SearchPage() {
     setSearchParams(buildRouteParams(sessionId, nextQuery), { replace });
   }, [setSearchParams]);
 
-  const upsertSession = useCallback((session: ResearchSearchSession, replaceUrl = false) => {
+  const upsertSession = useCallback((
+    session: ResearchSearchSession,
+    options: { replaceUrl?: boolean; syncRoute?: boolean } = {}
+  ) => {
     setSessions(prev => {
       const existingIndex = prev.findIndex(item => item.id === session.id);
       if (existingIndex === -1) {
@@ -290,7 +361,9 @@ export default function SearchPage() {
       next[existingIndex] = session;
       return next;
     });
-    setRouteForSession(session.id, session.query, replaceUrl);
+    if (options.syncRoute !== false) {
+      setRouteForSession(session.id, session.query, Boolean(options.replaceUrl));
+    }
   }, [setRouteForSession]);
 
   const syncActiveSearchContext = useCallback((session: ResearchSearchSession | null) => {
@@ -386,76 +459,223 @@ export default function SearchPage() {
         }
       }
 
-      const matches = await executeFilingResearchSearch({
-        query: effectiveQuery || trimmed,
-        filters: effectiveFilters,
-        mode: effectiveMode,
-        defaultForms: DEFAULT_FORM_SCOPE,
-        limit: RESEARCH_RESULT_LIMIT,
-        hydrateTextSignals: true,
-      });
-
-      setResults(matches);
-      setLastResolvedSearch({
+      const resolvedSearch = {
         query: effectiveQuery || trimmed,
         mode: effectiveMode,
         filters: effectiveFilters,
-      });
-
-      const session: ResearchSearchSession = {
-        id: targetSessionId,
-        title: buildResearchSessionTitle(trimmed, nextFilters),
-        query: trimmed,
-        mode: effectiveMode,
-        filters: nextFilters,
-        results: matches,
-        searched: true,
-        errorMsg:
-          matches.length === 0
-            ? 'No filings matched that search. Try widening the date range, removing an auditor filter, or broadening the Boolean expression.'
-            : '',
-        interpretation: interpreted.appliedHints,
-        resolvedSearch: {
-          query: effectiveQuery || trimmed,
-          mode: effectiveMode,
-          filters: effectiveFilters,
-        },
-        selectedResultId: matches[0]?.id || null,
-        createdAt: activeSession?.id === targetSessionId ? activeSession.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
       };
+      const fullHydrateSignals = shouldHydrateSearchSignals(effectiveMode, effectiveFilters);
+      const initialLimit = effectiveMode === 'boolean' ? INITIAL_BOOLEAN_RESULT_LIMIT : INITIAL_RESEARCH_RESULT_LIMIT;
+      const shouldRunVisibleAuditorRefinement =
+        effectiveMode === 'semantic' &&
+        Boolean(effectiveFilters.accountant.trim());
+      const shouldRunDeepRefinement =
+        RESEARCH_RESULT_LIMIT > initialLimit ||
+        (effectiveMode === 'semantic' && fullHydrateSignals && !shouldRunVisibleAuditorRefinement);
+      const shouldRunBackgroundRefinement =
+        shouldRunVisibleAuditorRefinement ||
+        shouldRunDeepRefinement;
+      const createdAt =
+        activeSession?.id === targetSessionId ? activeSession.createdAt : new Date().toISOString();
 
-      upsertSession(session, options.replaceUrl);
-      syncActiveSearchContext(session);
+      const initialMatches = await executeFilingResearchSearch({
+        query: resolvedSearch.query,
+        filters: resolvedSearch.filters,
+        mode: resolvedSearch.mode,
+        defaultForms: DEFAULT_FORM_SCOPE,
+        limit: initialLimit,
+        hydrateTextSignals: false,
+        deferTextValidation: shouldRunBackgroundRefinement,
+      });
 
-      if (matches.length === 0) {
-        setErrorMsg(session.errorMsg);
+      setResults(initialMatches);
+      setLastResolvedSearch(resolvedSearch);
+
+      const initialSession = buildResearchSession(
+        targetSessionId,
+        trimmed,
+        effectiveMode,
+        nextFilters,
+        initialMatches,
+        interpreted.appliedHints,
+        resolvedSearch,
+        createdAt,
+        {
+          isRefining: shouldRunBackgroundRefinement,
+          errorMsg:
+            initialMatches.length === 0 && !shouldRunBackgroundRefinement
+              ? 'No filings matched that search. Try widening the date range, removing an auditor filter, or broadening the Boolean expression.'
+              : '',
+        }
+      );
+
+      upsertSession(initialSession, { replaceUrl: options.replaceUrl });
+      syncActiveSearchContext(initialSession);
+
+      if (initialSession.errorMsg) {
+        setErrorMsg(initialSession.errorMsg);
       }
+
+      if (!shouldRunBackgroundRefinement) {
+        return;
+      }
+
+      const refinementKey = buildSearchSignature(resolvedSearch.query, resolvedSearch.mode, resolvedSearch.filters);
+      pendingRefinementKeysRef.current.set(targetSessionId, refinementKey);
+      setLoading(false);
+
+      void (async () => {
+        let baselineSession = initialSession;
+
+        try {
+          if (shouldRunVisibleAuditorRefinement) {
+            const visibleAuditorMatches = await executeFilingResearchSearch({
+              query: resolvedSearch.query,
+              filters: resolvedSearch.filters,
+              mode: resolvedSearch.mode,
+              defaultForms: DEFAULT_FORM_SCOPE,
+              limit: initialLimit,
+              hydrateTextSignals: true,
+              deferTextValidation: false,
+              preferFastCandidateCollection: true,
+            });
+
+            if (pendingRefinementKeysRef.current.get(targetSessionId) !== refinementKey) {
+              return;
+            }
+
+            const currentSession = sessionsRef.current.find(session => session.id === targetSessionId);
+            const visibleAuditorSession = buildResearchSession(
+              targetSessionId,
+              trimmed,
+              effectiveMode,
+              nextFilters,
+              visibleAuditorMatches,
+              interpreted.appliedHints,
+              resolvedSearch,
+              createdAt,
+              {
+                isRefining: shouldRunDeepRefinement,
+                selectedResultId: currentSession?.selectedResultId || baselineSession.selectedResultId,
+                errorMsg:
+                  visibleAuditorMatches.length === 0 && !shouldRunDeepRefinement
+                    ? 'No filings matched that search. Try widening the date range, removing an auditor filter, or broadening the Boolean expression.'
+                    : '',
+              }
+            );
+
+            baselineSession = visibleAuditorSession;
+            upsertSession(visibleAuditorSession, { syncRoute: false });
+            if (activeSessionIdRef.current === targetSessionId) {
+              syncActiveSearchContext(visibleAuditorSession);
+            }
+
+            if (!shouldRunDeepRefinement) {
+              pendingRefinementKeysRef.current.delete(targetSessionId);
+              return;
+            }
+          }
+
+          const refinedMatches = await executeFilingResearchSearch({
+            query: resolvedSearch.query,
+            filters: resolvedSearch.filters,
+            mode: resolvedSearch.mode,
+            defaultForms: DEFAULT_FORM_SCOPE,
+            limit: RESEARCH_RESULT_LIMIT,
+            hydrateTextSignals: fullHydrateSignals,
+            deferTextValidation: false,
+          });
+
+          if (pendingRefinementKeysRef.current.get(targetSessionId) !== refinementKey) {
+            return;
+          }
+
+          const currentSession = sessionsRef.current.find(session => session.id === targetSessionId);
+
+          const refinedSession = buildResearchSession(
+            targetSessionId,
+            trimmed,
+            effectiveMode,
+            nextFilters,
+            refinedMatches,
+            interpreted.appliedHints,
+            resolvedSearch,
+            createdAt,
+            {
+              selectedResultId: currentSession?.selectedResultId || baselineSession.selectedResultId,
+              errorMsg:
+                refinedMatches.length === 0
+                  ? 'No filings matched that search. Try widening the date range, removing an auditor filter, or broadening the Boolean expression.'
+                  : '',
+            }
+          );
+
+          upsertSession(refinedSession, { syncRoute: false });
+          if (activeSessionIdRef.current === targetSessionId) {
+            syncActiveSearchContext(refinedSession);
+          }
+          pendingRefinementKeysRef.current.delete(targetSessionId);
+        } catch (refinementError) {
+          console.error('Background research refinement failed:', refinementError);
+
+          if (pendingRefinementKeysRef.current.get(targetSessionId) !== refinementKey) {
+            return;
+          }
+
+          const currentSession = sessionsRef.current.find(session => session.id === targetSessionId);
+
+          const fallbackSession = buildResearchSession(
+            targetSessionId,
+            trimmed,
+            effectiveMode,
+            nextFilters,
+            baselineSession.results,
+            interpreted.appliedHints,
+            resolvedSearch,
+            createdAt,
+            {
+              isRefining: false,
+              selectedResultId: currentSession?.selectedResultId || baselineSession.selectedResultId,
+              errorMsg:
+                baselineSession.results.length === 0
+                  ? 'Research search failed. Check the SEC proxy path or try a narrower query.'
+                  : '',
+            }
+          );
+
+          upsertSession(fallbackSession, { syncRoute: false });
+          if (activeSessionIdRef.current === targetSessionId) {
+            syncActiveSearchContext(fallbackSession);
+          }
+          pendingRefinementKeysRef.current.delete(targetSessionId);
+        }
+      })();
+
+      return;
     } catch (error) {
       console.error('Research search failed:', error);
       setResults([]);
-      const failedSession: ResearchSearchSession = {
-        id: targetSessionId,
-        title: buildResearchSessionTitle(trimmed, nextFilters),
-        query: trimmed,
-        mode: effectiveMode,
-        filters: nextFilters,
-        results: [],
-        searched: true,
-        errorMsg: 'Research search failed. Check the SEC proxy path or try a narrower query.',
-        interpretation: interpreted.appliedHints,
-        resolvedSearch: {
+      pendingRefinementKeysRef.current.delete(targetSessionId);
+      const failedSession = buildResearchSession(
+        targetSessionId,
+        trimmed,
+        effectiveMode,
+        nextFilters,
+        [],
+        interpreted.appliedHints,
+        {
           query: trimmed,
           mode: effectiveMode,
           filters: nextFilters,
         },
-        selectedResultId: null,
-        createdAt: activeSession?.id === targetSessionId ? activeSession.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+        activeSession?.id === targetSessionId ? activeSession.createdAt : new Date().toISOString(),
+        {
+          errorMsg: 'Research search failed. Check the SEC proxy path or try a narrower query.',
+        }
+      );
 
       setErrorMsg(failedSession.errorMsg);
-      upsertSession(failedSession, options.replaceUrl);
+      upsertSession(failedSession, { replaceUrl: options.replaceUrl });
       syncActiveSearchContext(failedSession);
     } finally {
       setLoading(false);
@@ -478,6 +698,7 @@ export default function SearchPage() {
       return;
     }
 
+    activeSessionIdRef.current = activeSession.id;
     setQuery(activeSession.query);
     setSearchMode(activeSession.mode);
     setFilters(cloneSearchFilters(activeSession.filters));
@@ -494,6 +715,10 @@ export default function SearchPage() {
     setAlertMessage('');
     syncActiveSearchContext(activeSession);
   }, [activeSession, syncActiveSearchContext]);
+
+  useEffect(() => {
+    activeSessionIdRef.current = activeSession?.id || null;
+  }, [activeSession?.id]);
 
   useEffect(() => {
     if (activeSession || bootstrappedInitialSearch.current || !initialQuery) {
@@ -532,6 +757,7 @@ export default function SearchPage() {
         mode: pendingSearchIntent.mode,
         filters: cloneSearchFilters(pendingSearchIntent.filters),
         results: pendingSearchIntent.prefetchedResults,
+        isRefining: false,
         searched: true,
         errorMsg:
           pendingSearchIntent.prefetchedResults.length === 0
@@ -601,10 +827,11 @@ export default function SearchPage() {
       selectedResultId: resultId,
       updatedAt: new Date().toISOString(),
     };
-    upsertSession(updatedSession, true);
+    upsertSession(updatedSession, { replaceUrl: true });
   }, [activeSession, upsertSession]);
 
   const closeSession = useCallback((sessionId: string) => {
+    pendingRefinementKeysRef.current.delete(sessionId);
     setSessions(prev => {
       const next = prev.filter(item => item.id !== sessionId);
       const nextActive =
@@ -915,29 +1142,37 @@ export default function SearchPage() {
                 <div>Searching EDGAR, validating text matches, and ranking the strongest hits...</div>
               </div>
             ) : displayResults.length > 0 ? (
-              <div className="research-hit-scroll">
-                {displayResults.map(result => (
-                  <button
-                    key={result.id}
-                    className={`research-hit-card ${selectedResult?.id === result.id ? 'active' : ''}`}
-                    onClick={() => updateSelectedResult(result.id)}
-                  >
-                    <div className="topline">
-                      <span className="date">{result.fileDate}</span>
-                      <span className="form">{formatResultFormLabel(result)}</span>
-                    </div>
-                    <div className="company">{result.entityName}</div>
-                    <div className="meta">
-                      <span>{result.auditor || 'Auditor unavailable'}</span>
-                      <span>{result.sicDescription || result.sic || 'Industry unavailable'}</span>
-                    </div>
-                    <div className="match-reason">{result.matchReason || 'Matched filing text'}</div>
-                    <div className="snippet">
-                      {renderHighlightedText(result.matchSnippet || result.description || 'Matched on filing metadata.', previewHighlightTerms)}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <>
+                {isRefiningResults && (
+                  <div className="research-refining-banner">
+                    <Loader2 size={14} className="spinner" />
+                    <span>Showing initial hits while Vara validates filing text and loads more results in the background.</span>
+                  </div>
+                )}
+                <div className="research-hit-scroll">
+                  {displayResults.map(result => (
+                    <button
+                      key={result.id}
+                      className={`research-hit-card ${selectedResult?.id === result.id ? 'active' : ''}`}
+                      onClick={() => updateSelectedResult(result.id)}
+                    >
+                      <div className="topline">
+                        <span className="date">{result.fileDate}</span>
+                        <span className="form">{formatResultFormLabel(result)}</span>
+                      </div>
+                      <div className="company">{result.entityName}</div>
+                      <div className="meta">
+                        <span>{buildAuditorDisplayLabel(result.auditor, activeResolvedSearch.filters, isRefiningResults)}</span>
+                        <span>{result.sicDescription || result.sic || 'Industry unavailable'}</span>
+                      </div>
+                      <div className="match-reason">{result.matchReason || 'Matched filing metadata'}</div>
+                      <div className="snippet">
+                        {renderHighlightedText(result.matchSnippet || result.description || 'Matched on filing metadata.', previewHighlightTerms)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
             ) : searched ? (
               <div className="research-empty-state">
                 <div>{errorMsg || 'No filings matched your search.'}</div>
@@ -958,7 +1193,7 @@ export default function SearchPage() {
                     <h2>{selectedResult.entityName}</h2>
                     <div className="preview-meta-row">
                       <span>{selectedResult.fileDate}</span>
-                      <span>{selectedResult.auditor || 'Auditor not detected'}</span>
+                      <span>{buildAuditorDisplayLabel(selectedResult.auditor, activeResolvedSearch.filters, isRefiningResults)}</span>
                       <span>{selectedResult.fileNumber || 'File number unavailable'}</span>
                     </div>
                   </div>

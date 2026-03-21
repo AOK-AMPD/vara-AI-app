@@ -79,6 +79,8 @@ interface ExecuteSearchOptions {
   defaultForms?: string;
   limit?: number;
   hydrateTextSignals?: boolean;
+  deferTextValidation?: boolean;
+  preferFastCandidateCollection?: boolean;
 }
 
 function delay(ms: number): Promise<void> {
@@ -680,6 +682,14 @@ function matchesSignalFilters(result: FilingResearchResult, filters: SearchFilte
   return true;
 }
 
+function applyMetadataMatchFallback(results: FilingResearchResult[]): FilingResearchResult[] {
+  return results.map(result => ({
+    ...result,
+    matchReason: result.matchReason || 'Matched filing metadata',
+    matchSnippet: result.matchSnippet || result.description || 'Matched on filing metadata.',
+  }));
+}
+
 function mapSearchHit(hit: EdgarSearchHit): FilingResearchResult {
   const base = parseSearchHit(hit);
   const source = hit._source;
@@ -794,6 +804,8 @@ export async function executeFilingResearchSearch({
   defaultForms = '',
   limit = 50,
   hydrateTextSignals = false,
+  deferTextValidation = false,
+  preferFastCandidateCollection = false,
 }: ExecuteSearchOptions): Promise<FilingResearchResult[]> {
   const serverQuery = buildServerQuery(query || filters.keyword, filters, mode);
   const formTypes = normalizeFormTypes(filters, defaultForms);
@@ -802,6 +814,8 @@ export async function executeFilingResearchSearch({
   const semanticAuditorSearch = mode === 'semantic' && Boolean(filters.accountant.trim());
   const needsCompanyMetadata = requiresCompanyMetadata(filters);
   const requestedLimit = Math.max(limit, 1);
+  const fastPass = deferTextValidation;
+  const fastCandidateCollection = deferTextValidation || preferFastCandidateCollection;
   const displayLimit =
     mode === 'boolean'
       ? Math.min(requestedLimit, 200)
@@ -809,13 +823,19 @@ export async function executeFilingResearchSearch({
         ? Math.min(requestedLimit, 500)
         : Math.min(requestedLimit, 300);
   const candidateLimit =
-    mode === 'boolean'
-      ? Math.min(Math.max(displayLimit * 2, 220), 320)
-      : semanticAuditorSearch
-        ? Math.min(Math.max(displayLimit + 180, 450), 700)
-        : Math.min(Math.max(displayLimit + 80, 180), 320);
+    fastCandidateCollection
+      ? mode === 'boolean'
+        ? Math.min(Math.max(displayLimit * 2, 70), 120)
+        : semanticAuditorSearch
+          ? Math.min(Math.max(displayLimit + 20, 100), 140)
+          : Math.min(Math.max(displayLimit + 20, 80), 120)
+      : mode === 'boolean'
+        ? Math.min(Math.max(displayLimit * 2, 220), 320)
+        : semanticAuditorSearch
+          ? Math.min(Math.max(displayLimit + 180, 450), 700)
+          : Math.min(Math.max(displayLimit + 80, 180), 320);
   const needsTextFiltering = requiresTextFiltering(filters, query, mode);
-  const shouldHydrateSignals = hydrateTextSignals || needsTextFiltering;
+  const shouldHydrateSignals = !fastPass && (hydrateTextSignals || needsTextFiltering);
   const booleanServerQueries = mode === 'boolean' ? buildBooleanCandidateQueries(query || filters.keyword).slice(0, 5) : [];
   const semanticServerQueries = mode === 'semantic' ? buildSemanticCandidateQueries(serverQuery, filters) : [];
 
@@ -827,19 +847,35 @@ export async function executeFilingResearchSearch({
   const hitMap = new Map<string, { hit: EdgarSearchHit; queryPriority: number; score: number }>();
   let lastSearchError: Error | null = null;
 
-  const filteredServerQueries = serverQueries.filter(Boolean);
+  const filteredServerQueries = (
+    fastCandidateCollection
+      ? serverQueries.slice(0, mode === 'boolean' ? 3 : semanticAuditorSearch ? 2 : 3)
+      : serverQueries
+  ).filter(Boolean);
   const perQueryResultLimit =
-    mode === 'boolean'
-      ? Math.min(Math.max(candidateLimit, 120), 240)
-      : semanticAuditorSearch
-        ? Math.min(Math.max(candidateLimit, 320), 500)
-        : Math.min(Math.max(candidateLimit, 140), 220);
+    fastCandidateCollection
+      ? mode === 'boolean'
+        ? Math.min(Math.max(candidateLimit, 70), 100)
+        : semanticAuditorSearch
+          ? Math.min(Math.max(candidateLimit, 100), 140)
+          : Math.min(Math.max(candidateLimit, 80), 120)
+      : mode === 'boolean'
+        ? Math.min(Math.max(candidateLimit, 120), 240)
+        : semanticAuditorSearch
+          ? Math.min(Math.max(candidateLimit, 320), 500)
+          : Math.min(Math.max(candidateLimit, 140), 220);
   const collectionTarget =
-    mode === 'boolean'
-      ? candidateLimit * 2
-      : semanticAuditorSearch
-        ? Math.min(candidateLimit + 180, 900)
-        : candidateLimit;
+    fastCandidateCollection
+      ? mode === 'boolean'
+        ? Math.min(candidateLimit + 20, 140)
+        : semanticAuditorSearch
+          ? Math.min(candidateLimit + 20, 180)
+          : Math.min(candidateLimit + 10, 130)
+      : mode === 'boolean'
+        ? candidateLimit * 2
+        : semanticAuditorSearch
+          ? Math.min(candidateLimit + 180, 900)
+          : candidateLimit;
 
   for (const [queryIndex, candidateQuery] of filteredServerQueries.entries()) {
     try {
@@ -874,7 +910,7 @@ export async function executeFilingResearchSearch({
       }
 
       if (mode === 'boolean') {
-        await delay(180);
+        await delay(fastCandidateCollection ? 60 : 180);
       }
     } catch (error) {
       lastSearchError = error instanceof Error ? error : new Error('EDGAR search failed');
@@ -906,7 +942,11 @@ export async function executeFilingResearchSearch({
   results = sortResearchResults(results, preferRelevance);
 
   if (!shouldHydrateSignals) {
-    return results.slice(0, displayLimit);
+    const fastResults = applyMetadataMatchFallback(results.slice(0, displayLimit));
+    if (needsCompanyMetadata) {
+      return fastResults;
+    }
+    return hydrateLightweightMetadata(fastResults);
   }
 
   const signalMap = new Map<string, FilingSignal>();

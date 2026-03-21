@@ -165,8 +165,11 @@ async function launchChrome() {
     [
       '--headless=new',
       '--disable-gpu',
+      '--disable-dev-shm-usage',
       '--hide-scrollbars',
       '--allow-pre-commit-input',
+      '--no-first-run',
+      '--no-default-browser-check',
       `--remote-debugging-port=${CDP_PORT}`,
       `--user-data-dir=${userDataDir}`,
       'about:blank',
@@ -174,7 +177,7 @@ async function launchChrome() {
     { stdio: 'ignore' }
   );
 
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
       const version = await response.json();
@@ -260,10 +263,12 @@ async function waitForSearchIdle(session) {
         const submit = document.querySelector('.research-query-form button[type="submit"]');
         const hitCards = document.querySelectorAll('.research-hit-card').length;
         const empty = document.querySelector('.research-empty-state')?.textContent?.trim() || '';
+        const refining = Boolean(document.querySelector('.research-refining-banner'));
         return {
           disabled: Boolean(submit?.disabled),
           hitCards,
           empty,
+          refining,
         };
       })()`
     );
@@ -277,6 +282,39 @@ async function waitForSearchIdle(session) {
   }
 
   return { timedOut: true };
+}
+
+async function waitForRefinementSettled(session) {
+  let lastState = null;
+
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    const state = await evaluate(
+      session,
+      `(() => {
+        const submit = document.querySelector('.research-query-form button[type="submit"]');
+        const hitCards = document.querySelectorAll('.research-hit-card').length;
+        const empty = document.querySelector('.research-empty-state')?.textContent?.trim() || '';
+        const refining = Boolean(document.querySelector('.research-refining-banner'));
+        return {
+          disabled: Boolean(submit?.disabled),
+          hitCards,
+          empty,
+          refining,
+        };
+      })()`
+    );
+
+    lastState = state;
+
+    if (!state?.disabled && !state?.refining && (state.hitCards > 0 || state.empty)) {
+      await delay(800);
+      return state;
+    }
+
+    await delay(500);
+  }
+
+  return lastState || { timedOut: true };
 }
 
 async function captureScreenshot(session, filename) {
@@ -297,6 +335,7 @@ async function collectSearchState(session) {
         .find(button => button.classList.contains('active'))?.textContent?.replace(/\\s+/g, ' ').trim() || '';
       const hitCards = Array.from(document.querySelectorAll('.research-hit-card')).slice(0, 5).map(card => ({
         title: card.querySelector('.company')?.textContent?.trim() || '',
+        auditor: card.querySelector('.meta span')?.textContent?.trim() || '',
         reason: card.querySelector('.match-reason')?.textContent?.trim() || '',
         snippet: card.querySelector('.snippet')?.textContent?.replace(/\\s+/g, ' ').trim() || '',
       }));
@@ -305,6 +344,7 @@ async function collectSearchState(session) {
       const interpretation = Array.from(document.querySelectorAll('.research-chip-row .research-chip')).map(node => node.textContent?.trim()).filter(Boolean);
       const advancedButton = Array.from(document.querySelectorAll('button')).find(button => (button.textContent || '').includes('Advanced Filters'));
       const advancedSummary = advancedButton?.parentElement?.textContent?.replace(/\\s+/g, ' ').trim() || '';
+      const refining = Boolean(document.querySelector('.research-refining-banner'));
       return {
         path: location.pathname + location.search,
         query,
@@ -313,6 +353,7 @@ async function collectSearchState(session) {
         resultCount: document.querySelectorAll('.research-hit-card').length,
         paneTitle: document.querySelector('.research-hit-list h2')?.textContent?.trim() || '',
         emptyState,
+        refining,
         interpretation,
         advancedSummary,
         hitCards,
@@ -371,14 +412,23 @@ async function runQuery(session, label, query, options = {}) {
     }
 
     await fillInput(session, '.research-query-form input', query);
+    const startedAt = Date.now();
     await click(session, '.research-query-form button[type="submit"]');
     const idleState = await waitForSearchIdle(session);
+    const initialElapsedMs = Date.now() - startedAt;
+    const initialSummary = await collectSearchState(session);
+    const refinedState = await waitForRefinementSettled(session);
+    const totalElapsedMs = Date.now() - startedAt;
     const summary = await collectSearchState(session);
     await captureScreenshot(session, `${label}.png`);
     return {
       label,
       query,
+      initialElapsedMs,
+      totalElapsedMs,
       idleState,
+      refinedState,
+      initialSummary,
       summary,
       consoleMessages,
       exceptions,
@@ -403,6 +453,8 @@ try {
   results.push(await runQuery(session, '03-after-structured-car-parking', 'car parking w/10 installation'));
   results.push(await runQuery(session, '04-clean-asr', 'ASR w/5 derivative', { resetState: true }));
   results.push(await runQuery(session, '05-repeat-clean-car-parking', 'car parking w/10 installation', { resetState: true }));
+  results.push(await runQuery(session, '06-clean-ey-spelled-out', 'Temporary equity in last 3 years in 10-Q / 10-K audited by Ernst & Young', { resetState: true }));
+  results.push(await runQuery(session, '07-clean-ey-abbrev', 'Temporary equity in last 3 years in 10-Q / 10-K audited by EY', { resetState: true }));
 
   const report = {
     rootUrl: ROOT_URL,

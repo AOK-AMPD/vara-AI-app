@@ -141,6 +141,11 @@ async function launchChrome() {
     [
       '--headless=new',
       '--disable-gpu',
+      '--disable-dev-shm-usage',
+      '--hide-scrollbars',
+      '--allow-pre-commit-input',
+      '--no-first-run',
+      '--no-default-browser-check',
       `--remote-debugging-port=${CDP_PORT}`,
       `--user-data-dir=${userDataDir}`,
       'about:blank',
@@ -148,7 +153,7 @@ async function launchChrome() {
     { stdio: 'ignore' }
   );
 
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
     try {
       const response = await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`);
       const version = await response.json();

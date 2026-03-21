@@ -14,6 +14,7 @@ export interface ResearchSearchSession {
   mode: ResearchSearchMode;
   filters: SearchFilters;
   results: FilingResearchResult[];
+  isRefining: boolean;
   searched: boolean;
   errorMsg: string;
   interpretation: string[];
@@ -80,6 +81,7 @@ function sanitizeSession(session: ResearchSearchSession): ResearchSearchSession 
       ...result,
       documentType: result.documentType || result.formType || '',
     })),
+    isRefining: Boolean((session as Partial<ResearchSearchSession>).isRefining),
     resolvedSearch: {
       query: session.resolvedSearch.query,
       mode: session.resolvedSearch.mode,

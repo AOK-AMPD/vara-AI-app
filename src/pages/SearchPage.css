@@ -745,6 +745,20 @@
   padding-right: 4px;
 }
 
+.research-refining-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  background: rgba(30, 41, 59, 0.72);
+  color: #BFDBFE;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .research-hit-card {
   text-align: left;
   border-radius: 14px;
