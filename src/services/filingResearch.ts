@@ -703,6 +703,11 @@ function applyMetadataMatchFallback(results: FilingResearchResult[]): FilingRese
   }));
 }
 
+function firstString(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) return value[0] || '';
+  return value || '';
+}
+
 function mapSearchHit(hit: EdgarSearchHit): FilingResearchResult {
   const base = parseSearchHit(hit);
   const source = hit._source;
@@ -723,14 +728,14 @@ function mapSearchHit(hit: EdgarSearchHit): FilingResearchResult {
     relevanceScore: hit._score,
     filingUrl: buildFilingUrl(base.cik, base.accessionNumber, base.primaryDocument),
     companyName: source?.entity_name || base.entityName,
-    tickers: [],
-    sic: source?.sics?.[0] || '',
+    tickers: source?.tickers || [],
+    sic: firstString(source?.sics),
     sicDescription: '',
     exchange: '',
-    stateOfIncorporation: source?.inc_states?.[0] || '',
+    stateOfIncorporation: firstString(source?.inc_states),
     fiscalYearEnd: '',
-    headquarters: source?.biz_locations?.[0] || '',
-    fileNumber: source?.file_num?.[0] || '',
+    headquarters: firstString(source?.biz_locations),
+    fileNumber: firstString(source?.file_num),
     auditor: '',
     acceleratedStatus: '',
   };

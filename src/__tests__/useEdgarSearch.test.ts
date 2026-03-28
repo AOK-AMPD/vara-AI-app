@@ -56,6 +56,24 @@ describe('useEdgarSearch', () => {
       expect(result.primaryDocument).toBe('aapl-20230930.htm');
     });
 
+    it('prefers primary_document from Elasticsearch _source', () => {
+      const result = parseSearchHit(makeHit({
+        _id: '0000320193:0000320193-23-000106:aapl-20230930.htm',
+        _source: {
+          ...makeHit()._source,
+          primary_document: 'aapl-20230930.htm',
+        },
+      }));
+      expect(result.primaryDocument).toBe('aapl-20230930.htm');
+    });
+
+    it('falls back to the third _id segment for Elasticsearch-style ids when primary_document is missing', () => {
+      const result = parseSearchHit(makeHit({
+        _id: '0000320193:0000320193-23-000106:aapl-20230930.htm',
+      }));
+      expect(result.primaryDocument).toBe('aapl-20230930.htm');
+    });
+
     it('extracts description', () => {
       const result = parseSearchHit(makeHit());
       expect(result.description).toBe('Annual Report');

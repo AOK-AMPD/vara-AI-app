@@ -536,18 +536,20 @@ export interface EdgarSearchHit {
   _score: number;
   _source: {
     ciks?: string[];
-    file_num?: string[];
+    file_num?: string | string[];
     display_names?: string[];
     file_date?: string;
     form?: string;
     adsh?: string;
     file_type?: string;
     file_description?: string;
-    biz_locations?: string[];
-    inc_states?: string[];
-    sics?: string[];
+    biz_locations?: string[] | string;
+    inc_states?: string[] | string;
+    sics?: string[] | string;
     root_forms?: string[];
     entity_name?: string;
+    primary_document?: string;
+    tickers?: string[];
   };
 }
 
