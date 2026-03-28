@@ -15,6 +15,8 @@ import {
   Sparkles,
   TrendingUp,
 } from 'lucide-react';
+import { URCBrandLockup } from '../components/brand/URCBrand';
+import { BRAND } from '../config/brand';
 import './LandingPage.css';
 
 const audienceLabels = [
@@ -29,17 +31,17 @@ const audienceLabels = [
 const proofPoints = [
   {
     icon: Search,
-    title: 'Live filing discovery',
+    title: 'Consulting-grade discovery',
     copy: 'Natural-language and Boolean research with form, date, SIC, and section-level context.',
   },
   {
     icon: Bot,
-    title: 'AI in the workflow',
-    copy: 'Summaries, filing Q&A, S-1 analysis, and clause extraction stay tied to the source material.',
+    title: 'Cited AI acceleration',
+    copy: 'Summaries, filing Q&A, S-1 analysis, and clause extraction stay grounded in source evidence.',
   },
   {
     icon: Building2,
-    title: 'Specialty workspaces',
+    title: 'Specialist workspaces',
     copy: 'Benchmarking, governance, regulation, IPO, M&A, exhibits, offerings, and API delivery in one product.',
   },
 ] as const;
@@ -117,7 +119,7 @@ const capabilityGroups = [
     description:
       'Use the integrated copilot, API portal, and support center to turn one-off research into a repeatable operating workflow.',
     modules: [
-      'Vara Copilot',
+      'URC Copilot',
       'API Data Integration Portal',
       'Support Center workflow guides',
       'Unified navigation across workspaces',
@@ -344,17 +346,17 @@ export default function LandingPage() {
         <div className="landing-hero__copy">
           <div className="landing-kicker">
             <Sparkles size={16} />
-            <span>SEC intelligence for legal, finance, and compliance teams</span>
+            <span>Uniqus product for SEC intelligence, benchmarking, and transaction research</span>
           </div>
 
           <h1 className="landing-title">
-            Make SEC research feel like
-            <span> momentum, not friction.</span>
+            Move from SEC question to
+            <span> client-ready insight faster.</span>
           </h1>
 
           <p className="landing-subtitle">
-            Vara combines live EDGAR discovery, peer benchmarking, AI extraction, governance
-            research, and transaction workspaces in one high-context product.
+            {BRAND.productName} combines live EDGAR discovery, peer benchmarking, AI extraction,
+            governance research, and transaction workspaces in one enterprise research environment.
           </p>
 
           <form className="landing-search" onSubmit={handleSearch}>
@@ -467,7 +469,7 @@ export default function LandingPage() {
 
       <section className="landing-section landing-section--workflow">
         <div className="landing-section__header">
-          <p className="landing-section__eyebrow">How Vara Works</p>
+          <p className="landing-section__eyebrow">How URC Works</p>
           <h2>Research loops that keep teams in flow.</h2>
           <p>
             Start with search, move to benchmarking, pull AI help in context, and expand into
@@ -537,11 +539,10 @@ export default function LandingPage() {
       <footer className="landing-footer">
         <div className="landing-footer__content">
           <div className="landing-footer__brand">
-            <VaraLogo size={18} />
-            Vara AI
+            <URCBrandLockup size={18} tone="light" showParent />
           </div>
           <div className="landing-footer__links">
-            <span>&copy; 2026 Vara AI Inc.</span>
+            <span>&copy; 2026 {BRAND.productName}</span>
             <a href="/support">Support</a>
             <a href="/support">Privacy</a>
             <a href="/support">Terms</a>
@@ -549,20 +550,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  );
-}
-
-export function VaraLogo({ size = 24 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="vara-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#60A5FA" />
-          <stop offset="100%" stopColor="#A78BFA" />
-        </linearGradient>
-      </defs>
-      <path d="M3 4h4.5L12 18 16.5 4H21l-7.5 18h-3L3 4z" fill="url(#vara-grad)" opacity="0.9" />
-      <path d="M3 4h4.5L12 18 16.5 4H21l-7.5 18h-3L3 4z" fill="none" stroke="white" strokeWidth="0.5" opacity="0.4" />
-    </svg>
   );
 }

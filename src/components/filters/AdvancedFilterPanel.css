@@ -23,8 +23,8 @@
 }
 
 .afp-count {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60A5FA;
+  background: rgba(179, 31, 126, 0.2);
+  color: #D66CAE;
   font-size: 0.7rem;
   padding: 1px 6px;
   border-radius: 9999px;
@@ -34,7 +34,7 @@
 .afp-clear {
   background: none;
   border: none;
-  color: #60A5FA;
+  color: #D66CAE;
   cursor: pointer;
   font-size: 0.75rem;
   padding: 0;
@@ -56,7 +56,7 @@
 }
 
 .afp-keyword-input:focus {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 31, 126, 0.3);
 }
 
 .afp-section {
@@ -97,8 +97,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(59, 130, 246, 0.15);
-  color: #60A5FA;
+  background: rgba(179, 31, 126, 0.15);
+  color: #D66CAE;
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -130,7 +130,7 @@
 }
 
 .afp-checkbox input[type="checkbox"] {
-  accent-color: #3B82F6;
+  accent-color: #B31F7E;
   width: 14px;
   height: 14px;
 }
@@ -153,13 +153,13 @@
 }
 
 .afp-date-input:focus {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 31, 126, 0.3);
 }
 
 .afp-apply-btn {
   margin-top: 8px;
   padding: 8px 16px;
-  background: #3B82F6;
+  background: #B31F7E;
   color: white;
   border: none;
   border-radius: 8px;
@@ -170,5 +170,6 @@
 }
 
 .afp-apply-btn:hover {
-  background: #2563EB;
+  background: #482A7A;
 }
+

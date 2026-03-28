@@ -22,7 +22,7 @@ const RATIO_LABELS: Record<string, string> = {
 };
 
 const MULTIPLE_RATIOS = new Set(['currentRatio', 'debtToEquity', 'assetTurnover']);
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+const COLORS = ['#B31F7E', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 function formatRatioValue(key: string, value: number | null): string {
   if (value == null) return '-';
@@ -109,7 +109,7 @@ export default function AccountingAnalytics() {
   return (
     <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <TrendingUp size={28} style={{ color: '#60A5FA' }} />
+        <TrendingUp size={28} style={{ color: '#D66CAE' }} />
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>Accounting Analytics</h1>
       </div>
 
@@ -204,3 +204,4 @@ export default function AccountingAnalytics() {
     </div>
   );
 }
+

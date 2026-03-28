@@ -70,7 +70,7 @@
 }
 
 .nav-btn.active {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 31, 126, 0.1);
   color: var(--brand-blue);
   box-shadow: inset 3px 0 0 var(--brand-blue);
 }
@@ -132,7 +132,7 @@
 .search-bar input:focus {
   outline: none;
   border-color: var(--brand-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(179, 31, 126, 0.2);
 }
 
 .search-bar .search-icon {
@@ -140,3 +140,4 @@
   left: 12px;
   color: var(--text-muted);
 }
+

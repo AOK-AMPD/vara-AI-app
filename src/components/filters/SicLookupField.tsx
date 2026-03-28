@@ -12,10 +12,10 @@ const shellStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
-  padding: '7px 12px',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '8px',
+  padding: '9px 12px',
+  background: 'var(--input-bg)',
+  border: '1px solid var(--input-border)',
+  borderRadius: '12px',
 };
 
 const inputStyle: React.CSSProperties = {
@@ -23,7 +23,7 @@ const inputStyle: React.CSSProperties = {
   background: 'transparent',
   border: 'none',
   outline: 'none',
-  color: 'white',
+  color: 'var(--text-primary)',
   fontSize: '0.82rem',
   padding: 0,
   minWidth: 0,
@@ -109,7 +109,7 @@ export default function SicLookupField({
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
       <div style={shellStyle}>
-        {loading ? <Loader2 size={14} className="spinner" /> : <Building2 size={14} style={{ color: '#94A3B8' }} />}
+        {loading ? <Loader2 size={14} className="spinner" /> : <Building2 size={14} style={{ color: 'var(--text-muted)' }} />}
         <input
           value={value}
           onChange={event => {
@@ -127,7 +127,7 @@ export default function SicLookupField({
               onChange('');
               setOpen(false);
             }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#64748B' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--text-muted)' }}
           >
             <X size={14} />
           </button>
@@ -143,9 +143,9 @@ export default function SicLookupField({
             right: 0,
             zIndex: 40,
             borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.12)',
-            background: '#172036',
-            boxShadow: '0 14px 32px rgba(0,0,0,0.35)',
+            border: '1px solid var(--border-color)',
+            background: 'var(--surface-panel-strong)',
+            boxShadow: '0 18px 42px rgba(58,30,65,0.12)',
             maxHeight: '320px',
             overflowY: 'auto',
           }}
@@ -164,21 +164,21 @@ export default function SicLookupField({
                   padding: '10px 12px',
                   background: 'transparent',
                   border: 'none',
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  borderBottom: '1px solid var(--border-color)',
                   cursor: 'pointer',
                   textAlign: 'left',
-                  color: 'white',
+                  color: 'var(--text-primary)',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'baseline' }}>
                   <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{option.title}</span>
-                  <span style={{ fontSize: '0.74rem', color: '#60A5FA', fontFamily: 'var(--font-mono)' }}>{option.code}</span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>{option.code}</span>
                 </div>
-                <div style={{ marginTop: '2px', fontSize: '0.72rem', color: '#94A3B8' }}>{option.office}</div>
+                <div style={{ marginTop: '2px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>{option.office}</div>
               </button>
             ))
           ) : (
-            <div style={{ padding: '12px', fontSize: '0.78rem', color: '#94A3B8' }}>
+            <div style={{ padding: '12px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               {value.trim() ? 'No SIC codes match that search yet.' : 'Click or type to browse the full SEC SIC code list.'}
             </div>
           )}

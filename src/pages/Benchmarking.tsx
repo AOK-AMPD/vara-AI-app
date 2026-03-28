@@ -11,7 +11,7 @@ import SectionMatrix, { type MatrixCell } from '../components/tables/SectionMatr
 import { useApp } from '../context/AppState';
 import './Benchmarking.css';
 
-const CHART_COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'];
+const CHART_COLORS = ['#B31F7E', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'];
 
 // ---- Column key helpers ----
 function makeColKey(ticker: string, year: number): string { return `${ticker}|${year}`; }
@@ -150,14 +150,32 @@ const FINANCIAL_SECTIONS: { title: string; metrics: { key: string; label: string
   },
 ];
 
-const TOOLTIP_STYLE = { background: '#1E293B', border: '1px solid #334155', borderRadius: '8px', color: '#E2E8F0' };
-const AXIS_STYLE = { fill: '#94A3B8', fontSize: 11 };
-const GRID_STROKE = 'rgba(51,65,85,0.4)';
-
 type RatioResult = { display: string; value: number | null };
 
 export default function Benchmarking() {
-  const { pendingCompareIntent, setPendingCompareIntent, setActiveCompareContext } = useApp();
+  const { pendingCompareIntent, setPendingCompareIntent, setActiveCompareContext, themeMode } = useApp();
+  const isDarkMode = themeMode === 'dark';
+  const tooltipStyle = useMemo(
+    () => ({
+      background: isDarkMode ? '#20182B' : '#FFFFFF',
+      border: `1px solid ${isDarkMode ? 'rgba(238, 223, 236, 0.16)' : 'rgba(72, 42, 122, 0.14)'}`,
+      borderRadius: '12px',
+      color: isDarkMode ? '#F8F5F8' : '#413F42',
+      boxShadow: isDarkMode ? '0 18px 36px rgba(0, 0, 0, 0.34)' : '0 18px 34px rgba(72, 42, 122, 0.12)',
+    }),
+    [isDarkMode]
+  );
+  const axisStyle = useMemo(
+    () => ({ fill: isDarkMode ? '#B9AFC0' : '#8F8390', fontSize: 11 }),
+    [isDarkMode]
+  );
+  const axisTickColor = isDarkMode ? '#E8DDE7' : '#6C6270';
+  const axisLineColor = isDarkMode ? 'rgba(238, 223, 236, 0.18)' : 'rgba(72, 42, 122, 0.18)';
+  const gridStroke = isDarkMode ? 'rgba(238, 223, 236, 0.12)' : 'rgba(72, 42, 122, 0.14)';
+  const groupedBorderColor = isDarkMode ? 'rgba(238, 223, 236, 0.14)' : 'rgba(72, 42, 122, 0.14)';
+  const tableHeaderBackground = isDarkMode ? '#1A1424' : '#F6EEF4';
+  const tableHeaderText = isDarkMode ? '#F8F5F8' : '#413F42';
+  const tableMutedText = isDarkMode ? '#B9AFC0' : '#6C6270';
   const [selectedTickers, setSelectedTickers] = useState<string[]>(['AAPL', 'MSFT']);
   // Multi-year per ticker: { AAPL: [2024, 2023], MSFT: [2024] }
   const [selectedYearsPerTicker, setSelectedYearsPerTicker] = useState<Record<string, number[]>>({});
@@ -705,7 +723,7 @@ Keep it crisp and practical.`;
   // ---- Shared cell border style (groups same-company columns visually) ----
   const colBorderStyle = (colKey: string, idx: number): React.CSSProperties => {
     const isFirstOfTicker = idx === 0 || colTicker(columns[idx - 1]) !== colTicker(colKey);
-    return { borderLeft: isFirstOfTicker ? `2px solid ${getColColor(colKey)}` : '1px solid rgba(51,65,85,0.3)' };
+    return { borderLeft: isFirstOfTicker ? `2px solid ${getColColor(colKey)}` : `1px solid ${groupedBorderColor}` };
   };
 
   return (
@@ -735,8 +753,8 @@ Keep it crisp and practical.`;
       <div className="glass-card" style={{ padding: '18px 20px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
           <div>
-            <h3 style={{ margin: 0, color: 'white', fontSize: '1rem' }}>Peer Cohort Builder</h3>
-            <p style={{ margin: '6px 0 0', color: '#94A3B8', fontSize: '0.84rem', maxWidth: '760px' }}>
+            <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1rem' }}>Peer Cohort Builder</h3>
+            <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: '0.84rem', maxWidth: '760px' }}>
               Build a focused peer set by SIC code, then generate a short memo on how the cohort stacks up. This is meant to replace the manual industry-code gathering step with something much closer to a usable peer workbench.
             </p>
           </div>
@@ -748,10 +766,10 @@ Keep it crisp and practical.`;
               style={{
                 padding: '8px 10px',
                 minWidth: '120px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--input-bg)',
+                border: '1px solid var(--input-border)',
                 borderRadius: '8px',
-                color: 'white',
+                color: 'var(--text-primary)',
               }}
             />
             <button
@@ -776,16 +794,16 @@ Keep it crisp and practical.`;
         </div>
 
         {peerDiscoveryMessage && (
-          <div style={{ color: '#BFDBFE', fontSize: '0.82rem', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.16)', borderRadius: '8px', padding: '10px 12px' }}>
+          <div style={{ color: 'var(--text-primary)', fontSize: '0.82rem', background: 'rgba(179,31,126,0.08)', border: '1px solid rgba(179,31,126,0.16)', borderRadius: '8px', padding: '10px 12px' }}>
             {peerDiscoveryMessage}
           </div>
         )}
 
         {cohortReport && (
-          <div style={{ borderLeft: '4px solid #3B82F6', background: 'rgba(15,23,42,0.65)', borderRadius: '10px', padding: '16px 18px' }}>
+          <div style={{ borderLeft: '4px solid #B31F7E', background: 'var(--surface-panel)', borderRadius: '10px', padding: '16px 18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
               <Sparkles size={16} className="text-blue-400" />
-              <h4 style={{ margin: 0, color: 'white' }}>Cohort Memo</h4>
+              <h4 style={{ margin: 0, color: 'var(--text-primary)' }}>Cohort Memo</h4>
             </div>
             <div className="md-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(cohortReport) }} />
           </div>
@@ -819,7 +837,7 @@ Keep it crisp and practical.`;
                     padding: '6px 10px',
                     fontWeight: 700,
                     fontSize: '0.82rem',
-                    color: '#fff',
+                    color: 'var(--text-primary)',
                     borderRight: `2px solid ${color}`,
                     background: `${color}22`,
                     whiteSpace: 'nowrap',
@@ -832,8 +850,8 @@ Keep it crisp and practical.`;
                     <span key={y} style={{
                       display: 'inline-flex', alignItems: 'center', gap: '4px',
                       padding: '4px 8px',
-                      borderRight: '1px solid rgba(255,255,255,0.1)',
-                      color: '#E2E8F0',
+                      borderRight: `1px solid ${groupedBorderColor}`,
+                      color: 'var(--text-primary)',
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       whiteSpace: 'nowrap',
@@ -842,7 +860,7 @@ Keep it crisp and practical.`;
                       <button
                         onClick={e => { e.stopPropagation(); toggleYear(ticker, y); }}
                         title={`Remove FY${y}`}
-                        style={{ padding: '0 2px', fontSize: '0.7rem', color: '#94A3B8', lineHeight: 1 }}
+                        style={{ padding: '0 2px', fontSize: '0.7rem', color: 'var(--text-muted)', lineHeight: 1 }}
                       >
                         ×
                       </button>
@@ -851,7 +869,7 @@ Keep it crisp and practical.`;
 
                   {/* + Add Year button */}
                   {years.length === 0 && loadingFacts ? (
-                    <span style={{ padding: '6px 8px' }}><Loader2 size={12} className="spinner" style={{ color: '#64748B' }} /></span>
+                    <span style={{ padding: '6px 8px' }}><Loader2 size={12} className="spinner" style={{ color: 'var(--text-muted)' }} /></span>
                   ) : unselectedYears.length > 0 && (
                     <button
                       onClick={e => {
@@ -863,8 +881,8 @@ Keep it crisp and practical.`;
                       style={{
                         padding: '5px 10px',
                         fontSize: '0.78rem',
-                        color: '#60A5FA',
-                        borderRight: '1px solid rgba(255,255,255,0.1)',
+                        color: '#D66CAE',
+                        borderRight: `1px solid ${groupedBorderColor}`,
                         fontWeight: 600,
                         display: 'flex', alignItems: 'center', gap: '3px',
                       }}
@@ -877,7 +895,7 @@ Keep it crisp and practical.`;
                   <button
                     onClick={() => removeTicker(ticker)}
                     title="Remove company"
-                    style={{ padding: '6px 8px', color: '#64748B' }}
+                    style={{ padding: '6px 8px', color: 'var(--text-muted)' }}
                   >
                     <X size={13} />
                   </button>
@@ -909,7 +927,7 @@ Keep it crisp and practical.`;
             )}
           </div>
           {columns.length > 0 && (
-            <div style={{ marginTop: '6px', fontSize: '0.75rem', color: '#64748B' }}>
+            <div style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {columns.length} column{columns.length !== 1 ? 's' : ''}: {columns.map(col => `${colTicker(col)} FY${colYear(col)}`).join(' · ')}
             </div>
           )}
@@ -929,13 +947,13 @@ Keep it crisp and practical.`;
 
       {/* AI Compare */}
       {aiAnalysis || aiAnalyzing ? (
-        <div className="ai-comparison-panel glass-card" style={{ padding: '24px', marginBottom: '8px', borderLeft: '4px solid #3B82F6' }}>
+        <div className="ai-comparison-panel glass-card" style={{ padding: '24px', marginBottom: '8px', borderLeft: '4px solid #B31F7E' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
             <Sparkles className="text-blue-400" size={20} />
-            <h3 style={{ fontWeight: 600, color: 'white', margin: 0 }}>Claude AI Structural Compare</h3>
+            <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>URC Structural Compare</h3>
           </div>
           {aiAnalyzing ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: '#CBD5E1' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'var(--text-secondary)' }}>
               <Loader2 className="spinner" size={18} /> Generating comparative analysis...
             </div>
           ) : (
@@ -945,7 +963,7 @@ Keep it crisp and practical.`;
         </div>
       ) : (
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
-          <button className="primary-btn sm" style={{ background: '#4F46E5' }} onClick={handleAiCompare} disabled={columns.length < 2}>
+          <button className="primary-btn sm" onClick={handleAiCompare} disabled={columns.length < 2}>
             <Sparkles size={16} /> Generate AI Compare
           </button>
         </div>
@@ -955,7 +973,7 @@ Keep it crisp and practical.`;
       {viewMode === 'financials' && (
         <div className="financials-view" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {loadingFacts || isLoading ? (
-            <div className="glass-card" style={{ padding: '64px', textAlign: 'center', color: '#94A3B8' }}>
+            <div className="glass-card" style={{ padding: '64px', textAlign: 'center', color: 'var(--text-muted)' }}>
               <Loader2 size={32} className="spinner" style={{ display: 'inline-block', marginBottom: '16px' }} />
               <p>Fetching XBRL financial data from SEC EDGAR...</p>
             </div>
@@ -1023,10 +1041,10 @@ Keep it crisp and practical.`;
                       <h4 className="chart-title">{chart.title} <span className="chart-subtitle">($ Billions)</span></h4>
                       <ResponsiveContainer width="100%" height={180}>
                         <BarChart data={chartData} barSize={Math.max(16, Math.min(36, 200 / chartData.length))}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                          <XAxis dataKey="name" tick={{ fill: '#CBD5E1', fontSize: 10 }} axisLine={{ stroke: '#334155' }} />
-                          <YAxis tick={AXIS_STYLE} axisLine={{ stroke: '#334155' }} tickFormatter={(v: number) => `$${v.toFixed(0)}B`} />
-                          <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`$${value.toFixed(1)}B`, chart.title]} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                          <XAxis dataKey="name" tick={{ fill: axisTickColor, fontSize: 10 }} axisLine={{ stroke: axisLineColor }} />
+                          <YAxis tick={axisStyle} axisLine={{ stroke: axisLineColor }} tickFormatter={(v: number) => `$${v.toFixed(0)}B`} />
+                          <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`$${value.toFixed(1)}B`, chart.title]} />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.fill} />)}
                           </Bar>
@@ -1059,12 +1077,12 @@ Keep it crisp and practical.`;
                     <h4 className="chart-title">Profitability Margins <span className="chart-subtitle">(%)</span></h4>
                     <ResponsiveContainer width="100%" height={220}>
                       <BarChart data={marginData} barGap={4}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                        <XAxis dataKey="name" tick={{ fill: '#CBD5E1', fontSize: 10 }} axisLine={{ stroke: '#334155' }} />
-                        <YAxis tick={AXIS_STYLE} axisLine={{ stroke: '#334155' }} tickFormatter={(v: number) => `${v}%`} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`${value.toFixed(1)}%`]} />
-                        <Legend wrapperStyle={{ fontSize: '0.75rem', color: '#94A3B8' }} />
-                        <Bar dataKey="Gross Margin" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                        <XAxis dataKey="name" tick={{ fill: axisTickColor, fontSize: 10 }} axisLine={{ stroke: axisLineColor }} />
+                        <YAxis tick={axisStyle} axisLine={{ stroke: axisLineColor }} tickFormatter={(v: number) => `${v}%`} />
+                        <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`${value.toFixed(1)}%`]} />
+                        <Legend wrapperStyle={{ fontSize: '0.75rem', color: tableMutedText }} />
+                        <Bar dataKey="Gross Margin" fill="#B31F7E" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="Operating Margin" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="Net Margin" fill="#10B981" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -1098,12 +1116,12 @@ Keep it crisp and practical.`;
                       <h4 className="chart-title">Balance Sheet Composition <span className="chart-subtitle">($ Billions)</span></h4>
                       <ResponsiveContainer width="100%" height={240}>
                         <BarChart data={bsData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                          <XAxis dataKey="name" tick={{ fill: '#CBD5E1', fontSize: 10 }} axisLine={{ stroke: '#334155' }} />
-                          <YAxis tick={AXIS_STYLE} axisLine={{ stroke: '#334155' }} tickFormatter={(v: number) => `$${v}B`} />
-                          <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`$${value.toFixed(1)}B`]} />
-                          <Legend wrapperStyle={{ fontSize: '0.7rem', color: '#94A3B8' }} />
-                          <Bar dataKey="Cash" stackId="a" fill="#3B82F6" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                          <XAxis dataKey="name" tick={{ fill: axisTickColor, fontSize: 10 }} axisLine={{ stroke: axisLineColor }} />
+                          <YAxis tick={axisStyle} axisLine={{ stroke: axisLineColor }} tickFormatter={(v: number) => `$${v}B`} />
+                          <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`$${value.toFixed(1)}B`]} />
+                          <Legend wrapperStyle={{ fontSize: '0.7rem', color: tableMutedText }} />
+                          <Bar dataKey="Cash" stackId="a" fill="#B31F7E" />
                           <Bar dataKey="AR + Inventory" stackId="a" fill="#F59E0B" />
                           <Bar dataKey="Goodwill & Intangibles" stackId="a" fill="#8B5CF6" />
                           <Bar dataKey="Other Assets" stackId="a" fill="#475569" radius={[4, 4, 0, 0]} />
@@ -1129,11 +1147,11 @@ Keep it crisp and practical.`;
                       <h4 className="chart-title">Cash Flow Allocation <span className="chart-subtitle">($ Billions)</span></h4>
                       <ResponsiveContainer width="100%" height={240}>
                         <BarChart data={cfData} barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                          <XAxis dataKey="name" tick={{ fill: '#CBD5E1', fontSize: 10 }} axisLine={{ stroke: '#334155' }} />
-                          <YAxis tick={AXIS_STYLE} axisLine={{ stroke: '#334155' }} tickFormatter={(v: number) => `$${v}B`} />
-                          <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: number) => [`$${value.toFixed(1)}B`]} />
-                          <Legend wrapperStyle={{ fontSize: '0.7rem', color: '#94A3B8' }} />
+                          <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                          <XAxis dataKey="name" tick={{ fill: axisTickColor, fontSize: 10 }} axisLine={{ stroke: axisLineColor }} />
+                          <YAxis tick={axisStyle} axisLine={{ stroke: axisLineColor }} tickFormatter={(v: number) => `$${v}B`} />
+                          <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => [`$${value.toFixed(1)}B`]} />
+                          <Legend wrapperStyle={{ fontSize: '0.7rem', color: tableMutedText }} />
                           <Bar dataKey="Operating CF" fill="#10B981" radius={[4, 4, 0, 0]} />
                           <Bar dataKey="CapEx" fill="#EF4444" radius={[0, 0, 4, 4]} />
                           <Bar dataKey="Dividends" fill="#F59E0B" radius={[0, 0, 4, 4]} />
@@ -1179,8 +1197,8 @@ Keep it crisp and practical.`;
                     <h4 className="chart-title">Financial Profile Comparison <span className="chart-subtitle">(Normalized across all columns)</span></h4>
                     <ResponsiveContainer width="100%" height={320}>
                       <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
-                        <PolarGrid stroke="rgba(51,65,85,0.5)" />
-                        <PolarAngleAxis dataKey="dimension" tick={{ fill: '#CBD5E1', fontSize: 11 }} />
+                        <PolarGrid stroke={axisLineColor} />
+                        <PolarAngleAxis dataKey="dimension" tick={{ fill: axisTickColor, fontSize: 11 }} />
                         {columns.map((col, i) => (
                           <Radar
                             key={col}
@@ -1192,8 +1210,8 @@ Keep it crisp and practical.`;
                             strokeWidth={2}
                           />
                         ))}
-                        <Legend wrapperStyle={{ fontSize: '0.75rem', color: '#94A3B8' }} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} />
+                        <Legend wrapperStyle={{ fontSize: '0.75rem', color: tableMutedText }} />
+                        <Tooltip contentStyle={tooltipStyle} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1204,8 +1222,8 @@ Keep it crisp and practical.`;
               <div className="glass-card" style={{ overflow: 'auto' }}>
                 <table className="financial-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: `${300 + columns.length * 150}px` }}>
                   <thead>
-                    <tr style={{ background: '#0F172A', borderBottom: '2px solid #334155', position: 'sticky', top: 0, zIndex: 10 }}>
-                      <th style={{ padding: '16px 20px', fontWeight: 600, color: '#CBD5E1', textAlign: 'left', width: '280px', fontSize: '0.85rem' }}>
+                    <tr style={{ background: tableHeaderBackground, borderBottom: `2px solid ${axisLineColor}`, position: 'sticky', top: 0, zIndex: 10 }}>
+                      <th style={{ padding: '16px 20px', fontWeight: 600, color: tableHeaderText, textAlign: 'left', width: '280px', fontSize: '0.85rem' }}>
                         Metric
                       </th>
                       {columns.map((col, idx) => {
@@ -1215,14 +1233,14 @@ Keep it crisp and practical.`;
                           <th key={col} style={{
                             padding: '12px 14px',
                             fontWeight: 700,
-                            color: 'white',
+                            color: tableHeaderText,
                             textAlign: 'right',
-                            borderLeft: isFirstOfTicker ? `2px solid ${color}` : '1px solid rgba(51,65,85,0.3)',
+                            borderLeft: isFirstOfTicker ? `2px solid ${color}` : `1px solid ${groupedBorderColor}`,
                             fontSize: '0.85rem',
                             minWidth: '130px',
                           }}>
                             <span style={{ color }}>{colTicker(col)}</span>
-                            <div style={{ fontSize: '0.72rem', fontWeight: 500, color: '#94A3B8', marginTop: '2px' }}>FY{colYear(col)}</div>
+                            <div style={{ fontSize: '0.72rem', fontWeight: 500, color: tableMutedText, marginTop: '2px' }}>FY{colYear(col)}</div>
                           </th>
                         );
                       })}
@@ -1233,17 +1251,17 @@ Keep it crisp and practical.`;
                       <React.Fragment key={section.title}>
                         <tr>
                           <td colSpan={columns.length + 1} style={{
-                            padding: '12px 20px', background: 'rgba(59,130,246,0.06)',
-                            fontWeight: 700, fontSize: '0.8rem', color: '#60A5FA',
+                            padding: '12px 20px', background: 'rgba(179,31,126,0.06)',
+                            fontWeight: 700, fontSize: '0.8rem', color: '#D66CAE',
                             textTransform: 'uppercase', letterSpacing: '0.05em',
-                            borderTop: '1px solid rgba(59,130,246,0.15)', borderBottom: '1px solid rgba(59,130,246,0.15)'
+                            borderTop: '1px solid rgba(179,31,126,0.15)', borderBottom: '1px solid rgba(179,31,126,0.15)'
                           }}>
                             {section.title}
                           </td>
                         </tr>
                         {section.metrics.map(metric => (
                           <tr key={metric.key} className="table-data-row">
-                            <td style={{ padding: '10px 20px', fontSize: '0.85rem', color: '#CBD5E1', fontWeight: 500 }}>
+                            <td style={{ padding: '10px 20px', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
                               {metric.label}
                             </td>
                             {columns.map((col, idx) => {
@@ -1252,7 +1270,7 @@ Keep it crisp and practical.`;
                                 <td key={col} style={{
                                   padding: '10px 14px', textAlign: 'right',
                                   fontFamily: 'var(--font-mono)', fontSize: '0.85rem',
-                                  color: m?.value != null ? (m.value < 0 ? '#F87171' : '#E2E8F0') : '#475569',
+                                  color: m?.value != null ? (m.value < 0 ? '#F87171' : 'var(--text-primary)') : 'var(--text-muted)',
                                   ...colBorderStyle(col, idx),
                                 }}>
                                   {m ? formatFinancialValue(m.value, m.unit) : '—'}
@@ -1279,7 +1297,7 @@ Keep it crisp and practical.`;
                       const bestCol = getBestCol(ratio.fn, ratio.higherIsBetter);
                       return (
                         <tr key={ratio.label} className="table-data-row">
-                          <td style={{ padding: '10px 20px', fontSize: '0.85rem', color: '#CBD5E1', fontWeight: 500, fontStyle: 'italic' }}>
+                          <td style={{ padding: '10px 20px', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 500, fontStyle: 'italic' }}>
                             {ratio.label}
                           </td>
                           {columns.map((col, idx) => {
@@ -1295,7 +1313,7 @@ Keep it crisp and practical.`;
                                   ? '3px solid #10B981'
                                   : (idx === 0 || colTicker(columns[idx - 1]) !== colTicker(col))
                                     ? `2px solid ${getColColor(col)}`
-                                    : '1px solid rgba(51,65,85,0.3)',
+                                    : `1px solid ${groupedBorderColor}`,
                               }}>
                                 {r.display}
                               </td>
@@ -1309,7 +1327,7 @@ Keep it crisp and practical.`;
               </div>
             </>
           ) : (
-            <div className="glass-card" style={{ padding: '48px', textAlign: 'center', color: '#94A3B8' }}>
+            <div className="glass-card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
               Add companies above to compare financials.
             </div>
           )}
@@ -1339,11 +1357,11 @@ Keep it crisp and practical.`;
                 </div>
                 <div className="column-body document-text">
                   {loadingTexts ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#94A3B8' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-muted)' }}>
                       <Loader2 size={16} className="spinner" /> Fetching live filing text...
                     </div>
                   ) : text ? (
-                    <p style={{ fontSize: '0.85rem', lineHeight: 1.7, color: '#CBD5E1' }}>{text}</p>
+                    <p style={{ fontSize: '0.85rem', lineHeight: 1.7, color: 'var(--text-primary)' }}>{text}</p>
                   ) : (
                     <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No data available.</p>
                   )}
@@ -1365,17 +1383,17 @@ Keep it crisp and practical.`;
       {viewMode === 'audit-matrix' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div className="glass-card" style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ color: '#94A3B8', fontSize: '0.85rem', fontWeight: 500 }}>Form Type:</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>Form Type:</span>
             {Object.keys(SECTION_LISTS).map(ft => (
               <button key={ft} onClick={() => setMatrixFormType(ft)} style={{
                 padding: '6px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.8rem',
-                background: matrixFormType === ft ? '#3B82F6' : 'rgba(255,255,255,0.05)',
-                color: matrixFormType === ft ? 'white' : '#94A3B8', transition: 'all 0.15s',
+                background: matrixFormType === ft ? '#B31F7E' : 'var(--surface-subtle)',
+                color: matrixFormType === ft ? '#FFFFFF' : 'var(--text-secondary)', transition: 'all 0.15s',
               }}>
                 {ft}
               </button>
             ))}
-            <span style={{ color: '#64748B', fontSize: '0.75rem', marginLeft: 'auto' }}>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: 'auto' }}>
               {(SECTION_LISTS[matrixFormType] || ALL_SECTIONS).length} sections &middot; {selectedTickers.length} companies
             </span>
           </div>
@@ -1388,20 +1406,20 @@ Keep it crisp and practical.`;
           />
 
           <div className="glass-card" style={{ overflow: 'auto' }}>
-            <h4 style={{ padding: '16px 20px', margin: 0, color: '#CBD5E1', fontSize: '0.9rem', fontWeight: 600, borderBottom: '1px solid rgba(51,65,85,0.3)' }}>
+            <h4 style={{ padding: '16px 20px', margin: 0, color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600, borderBottom: `1px solid ${groupedBorderColor}` }}>
               Accounting & Governance Metrics
             </h4>
             <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead>
-                <tr style={{ background: '#0F172A', borderBottom: '1px solid #334155', fontSize: '0.85rem' }}>
-                  <th style={{ padding: '14px 20px', fontWeight: 600, color: '#CBD5E1', width: '250px' }}>Metric</th>
+                <tr style={{ background: tableHeaderBackground, borderBottom: `1px solid ${axisLineColor}`, fontSize: '0.85rem' }}>
+                  <th style={{ padding: '14px 20px', fontWeight: 600, color: tableHeaderText, width: '250px' }}>Metric</th>
                   {columns.map((col, idx) => {
                     const color = getColColor(col);
                     const isFirst = idx === 0 || colTicker(columns[idx - 1]) !== colTicker(col);
                     return (
-                      <th key={col} style={{ padding: '14px 16px', fontWeight: 600, color: 'white', borderLeft: isFirst ? `2px solid ${color}` : '1px solid rgba(51,65,85,0.5)' }}>
+                      <th key={col} style={{ padding: '14px 16px', fontWeight: 600, color: tableHeaderText, borderLeft: isFirst ? `2px solid ${color}` : `1px solid ${groupedBorderColor}` }}>
                         <span style={{ color }}>{colTicker(col)}</span>
-                        <div style={{ fontSize: '0.7rem', color: '#64748B', fontWeight: 400 }}>FY{colYear(col)}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 400 }}>FY{colYear(col)}</div>
                       </th>
                     );
                   })}
@@ -1419,12 +1437,12 @@ Keep it crisp and practical.`;
                   { metric: 'Net Margin', getValue: (col: string) => getNetMargin(col).display },
                   { metric: 'Debt/Equity Ratio', getValue: (col: string) => getDebtToEquity(col).display },
                 ].map(row => (
-                  <tr key={row.metric} style={{ borderBottom: '1px solid rgba(51,65,85,0.3)' }}>
-                    <td style={{ padding: '12px 20px', color: '#CBD5E1', fontWeight: 500 }}>{row.metric}</td>
+                  <tr key={row.metric} style={{ borderBottom: `1px solid ${groupedBorderColor}` }}>
+                    <td style={{ padding: '12px 20px', color: 'var(--text-secondary)', fontWeight: 500 }}>{row.metric}</td>
                     {columns.map((col, idx) => {
                       const isFirst = idx === 0 || colTicker(columns[idx - 1]) !== colTicker(col);
                       return (
-                        <td key={col} style={{ padding: '12px 16px', color: '#94A3B8', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', borderLeft: isFirst ? `2px solid ${getColColor(col)}` : '1px solid rgba(51,65,85,0.3)' }}>
+                        <td key={col} style={{ padding: '12px 16px', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', borderLeft: isFirst ? `2px solid ${getColColor(col)}` : `1px solid ${groupedBorderColor}` }}>
                           {row.getValue(col)}
                         </td>
                       );
@@ -1445,12 +1463,12 @@ Keep it crisp and practical.`;
             top: dropdownPos.top,
             left: dropdownPos.left,
             zIndex: 9999,
-            background: '#0F172A',
-            border: '1px solid rgba(255,255,255,0.14)',
+            background: 'var(--surface-panel-strong)',
+            border: '1px solid var(--border-color)',
             borderRadius: '8px',
             padding: '4px',
             minWidth: '96px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+            boxShadow: isDarkMode ? '0 16px 30px rgba(0,0,0,0.35)' : '0 16px 26px rgba(72,42,122,0.14)',
             display: 'flex',
             flexDirection: 'column',
             gap: '2px',
@@ -1465,11 +1483,11 @@ Keep it crisp and practical.`;
                 onClick={() => { toggleYear(openYearDropdown, y); setOpenYearDropdown(null); }}
                 style={{
                   padding: '6px 14px', borderRadius: '6px', border: 'none',
-                  background: 'transparent', color: '#CBD5E1',
+                  background: 'transparent', color: 'var(--text-primary)',
                   fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer',
                   textAlign: 'left', whiteSpace: 'nowrap',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.15)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(179,31,126,0.15)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 FY{y}
@@ -1481,3 +1499,4 @@ Keep it crisp and practical.`;
     </div>
   );
 }
+

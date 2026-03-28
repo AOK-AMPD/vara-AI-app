@@ -90,8 +90,8 @@ export default function CompanySearchInput({ onSelect, placeholder = 'Search tic
 
   return (
     <div className={`company-search-input ${className}`} style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '6px 12px' }}>
-        {loading ? <Loader2 size={14} className="spinner" /> : <Search size={14} style={{ color: '#94A3B8' }} />}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(72,42,122,0.12)', borderRadius: '12px', padding: '8px 12px' }}>
+        {loading ? <Loader2 size={14} className="spinner" /> : <Search size={14} style={{ color: '#7A6C7B' }} />}
         <input
           ref={inputRef}
           type="text"
@@ -99,7 +99,7 @@ export default function CompanySearchInput({ onSelect, placeholder = 'Search tic
           onChange={e => handleSearch(e.target.value)}
           onFocus={() => results.length > 0 && setShowDropdown(true)}
           placeholder={placeholder}
-          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'white', fontSize: '0.85rem' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: '#413F42', fontSize: '0.85rem' }}
         />
         {query && (
           <button onClick={() => { setQuery(''); setResults([]); setShowDropdown(false); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -111,8 +111,8 @@ export default function CompanySearchInput({ onSelect, placeholder = 'Search tic
       {showDropdown && results.length > 0 && (
         <div ref={dropdownRef} style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-          background: '#1E293B', border: '1px solid #334155', borderRadius: '8px',
-          marginTop: '4px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+          background: '#FFF9FC', border: '1px solid rgba(72,42,122,0.12)', borderRadius: '12px',
+          marginTop: '4px', maxHeight: '300px', overflowY: 'auto', boxShadow: '0 18px 42px rgba(58,30,65,0.12)'
         }}>
           {results.map(r => (
             <div
@@ -124,15 +124,15 @@ export default function CompanySearchInput({ onSelect, placeholder = 'Search tic
               }}
               style={{
                 padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between',
-                alignItems: 'center', borderBottom: '1px solid rgba(51,65,85,0.3)',
+                alignItems: 'center', borderBottom: '1px solid rgba(72,42,122,0.08)',
                 fontSize: '0.85rem', transition: 'background 0.1s'
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(59,130,246,0.1)')}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(247,231,241,0.9)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
               <span>
-                <strong style={{ color: '#60A5FA' }}>{r.ticker}</strong>
-                {r.title && <span style={{ color: '#94A3B8', marginLeft: '8px' }}>{r.title}</span>}
+                <strong style={{ color: '#B31F7E' }}>{r.ticker}</strong>
+                {r.title && <span style={{ color: '#7A6C7B', marginLeft: '8px' }}>{r.title}</span>}
               </span>
               <span style={{ color: '#64748B', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>CIK: {r.cik}</span>
             </div>

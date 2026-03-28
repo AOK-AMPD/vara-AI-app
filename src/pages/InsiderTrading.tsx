@@ -70,7 +70,7 @@ export default function InsiderTrading() {
         const accNum = row.accessionNumber.replace(/-/g, '');
         const url = `https://www.sec.gov/Archives/edgar/data/${row.cik}/${accNum}/${row.primaryDocument}`;
         return (
-          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#60A5FA', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#D66CAE', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
             View <ExternalLink size={12} />
           </a>
         );
@@ -81,7 +81,7 @@ export default function InsiderTrading() {
   return (
     <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <UserCheck size={28} style={{ color: '#60A5FA' }} />
+        <UserCheck size={28} style={{ color: '#D66CAE' }} />
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>Insider Trading</h1>
       </div>
       <p style={{ color: '#94A3B8', marginBottom: '24px', fontSize: '0.9rem' }}>
@@ -96,12 +96,12 @@ export default function InsiderTrading() {
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px' }}>
           {companies.map(c => (
             <span key={c.ticker} style={{
-              background: 'rgba(96,165,250,0.15)', color: '#60A5FA', padding: '4px 12px',
+              background: 'rgba(214,108,174,0.15)', color: '#D66CAE', padding: '4px 12px',
               borderRadius: '16px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '6px'
             }}>
               {c.ticker}
               <button onClick={() => setCompanies(prev => prev.filter(x => x.ticker !== c.ticker))}
-                style={{ background: 'none', border: 'none', color: '#60A5FA', cursor: 'pointer', padding: 0, fontSize: '1rem' }}>
+                style={{ background: 'none', border: 'none', color: '#D66CAE', cursor: 'pointer', padding: 0, fontSize: '1rem' }}>
                 &times;
               </button>
             </span>
@@ -126,3 +126,4 @@ export default function InsiderTrading() {
     </div>
   );
 }
+

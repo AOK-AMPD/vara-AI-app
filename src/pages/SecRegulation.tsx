@@ -95,13 +95,13 @@ export default function SecRegulation() {
     { key: 'accessionNumber', header: 'Filing', render: (row) => {
       const accNum = row.accessionNumber.replace(/-/g, '');
       const url = `https://www.sec.gov/Archives/edgar/data/${row.cik}/${accNum}/${row.primaryDocument}`;
-      return <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#60A5FA', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>View <ExternalLink size={12} /></a>;
+      return <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#D66CAE', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>View <ExternalLink size={12} /></a>;
     }},
   ];
 
   const tabStyle = (active: boolean) => ({
     padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '0.85rem',
-    background: active ? '#3B82F6' : 'rgba(255,255,255,0.05)', color: active ? 'white' : '#94A3B8',
+    background: active ? '#B31F7E' : 'rgba(255,255,255,0.05)', color: active ? 'white' : '#94A3B8',
   });
 
   const recentItems = tab === 'rules' ? recentRules : recentGuidance;
@@ -109,7 +109,7 @@ export default function SecRegulation() {
   return (
     <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <Scale size={28} style={{ color: '#60A5FA' }} />
+        <Scale size={28} style={{ color: '#D66CAE' }} />
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>Securities Regulation</h1>
       </div>
       <p style={{ color: '#94A3B8', marginBottom: '24px', fontSize: '0.9rem' }}>Search SEC rules, proposed regulations, and staff guidance documents.</p>
@@ -126,7 +126,7 @@ export default function SecRegulation() {
             style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '0.85rem', outline: 'none' }} />
         </div>
         <button onClick={handleSearch} disabled={loading}
-          style={{ padding: '8px 20px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+          style={{ padding: '8px 20px', background: '#B31F7E', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
           {loading ? <Loader2 size={14} className="spinner" /> : <Search size={14} />} Search
         </button>
       </div>
@@ -155,13 +155,13 @@ export default function SecRegulation() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
               {recentItems.map((item, i) => (
                 <div key={i} style={cardStyle} onClick={() => viewFiling(item)}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(96,165,250,0.4)')}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(214,108,174,0.4)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}>
                   <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.entityName}</div>
                   {item.description && <div style={{ fontSize: '0.75rem', color: '#94A3B8', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.description}</div>}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{item.fileDate}</span>
-                    <span style={{ fontSize: '0.7rem', color: '#60A5FA', background: 'rgba(59,130,246,0.1)', padding: '2px 8px', borderRadius: '4px' }}>{item.formType}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#D66CAE', background: 'rgba(179,31,126,0.1)', padding: '2px 8px', borderRadius: '4px' }}>{item.formType}</span>
                   </div>
                 </div>
               ))}
@@ -174,3 +174,4 @@ export default function SecRegulation() {
     </div>
   );
 }
+

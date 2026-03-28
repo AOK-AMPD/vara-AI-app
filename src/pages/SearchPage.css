@@ -138,7 +138,7 @@
 .toggle-btn.active {
   background: var(--accent-blue);
   color: white;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 10px rgba(179, 31, 126, 0.3);
 }
 
 .search-bar-container {
@@ -188,8 +188,8 @@
 }
 
 .sample-pill {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(179, 31, 126, 0.1);
+  border: 1px solid rgba(179, 31, 126, 0.2);
   color: #E2E8F0;
   padding: 0.5rem 1rem;
   border-radius: 20px;
@@ -199,7 +199,7 @@
 }
 
 .sample-pill:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(179, 31, 126, 0.2);
   border-color: var(--accent-blue);
 }
 
@@ -225,7 +225,7 @@
 }
 
 .result-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: rgba(179, 31, 126, 0.3);
   transform: translateY(-2px);
 }
 
@@ -280,7 +280,7 @@
 
 .badge-type {
   color: var(--accent-blue);
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 31, 126, 0.1);
 }
 
 .result-snippet {
@@ -303,7 +303,7 @@
 .ai-summary-box {
   display: flex;
   gap: 0.75rem;
-  background: rgba(59, 130, 246, 0.05);
+  background: rgba(179, 31, 126, 0.05);
   border-left: 2px solid var(--accent-blue);
   padding: 1rem;
   border-radius: 0 8px 8px 0;
@@ -448,8 +448,8 @@
 .research-selected-snippet {
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(96, 165, 250, 0.18);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(14, 165, 233, 0.05));
+  border: 1px solid rgba(214, 108, 174, 0.18);
+  background: linear-gradient(135deg, rgba(179, 31, 126, 0.12), rgba(14, 165, 233, 0.05));
 }
 
 .research-rail-banner {
@@ -463,7 +463,7 @@
   letter-spacing: 0.08em;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #93C5FD;
+  color: #F1B8D7;
 }
 
 .research-rail-banner .copy {
@@ -491,9 +491,9 @@
   align-items: center;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(96, 165, 250, 0.12);
-  border: 1px solid rgba(96, 165, 250, 0.24);
-  color: #BFDBFE;
+  background: rgba(214, 108, 174, 0.12);
+  border: 1px solid rgba(214, 108, 174, 0.24);
+  color: #F4D7E8;
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -511,7 +511,7 @@
 .guide-header button {
   background: none;
   border: none;
-  color: #BFDBFE;
+  color: #F4D7E8;
   cursor: pointer;
   font-size: 0.78rem;
   font-weight: 600;
@@ -543,13 +543,13 @@
 }
 
 .guide-card .meaning {
-  color: #BFDBFE;
+  color: #F4D7E8;
   font-size: 0.78rem;
   margin-bottom: 4px;
 }
 
 .guide-card code {
-  color: #93C5FD;
+  color: #F1B8D7;
   font-size: 0.76rem;
 }
 
@@ -645,8 +645,8 @@
 }
 
 .research-tab.active {
-  border-color: rgba(96, 165, 250, 0.3);
-  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(214, 108, 174, 0.3);
+  background: rgba(179, 31, 126, 0.12);
   color: white;
 }
 
@@ -685,7 +685,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #60A5FA;
+  color: #D66CAE;
   margin-bottom: 8px;
 }
 
@@ -752,9 +752,9 @@
   margin-bottom: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid rgba(214, 108, 174, 0.2);
   background: rgba(30, 41, 59, 0.72);
-  color: #BFDBFE;
+  color: #F4D7E8;
   font-size: 0.82rem;
   line-height: 1.45;
 }
@@ -770,13 +770,13 @@
 }
 
 .research-hit-card:hover {
-  border-color: rgba(96, 165, 250, 0.25);
+  border-color: rgba(214, 108, 174, 0.25);
   transform: translateY(-1px);
 }
 
 .research-hit-card.active {
-  border-color: rgba(96, 165, 250, 0.38);
-  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(214, 108, 174, 0.38);
+  background: rgba(179, 31, 126, 0.1);
 }
 
 .research-hit-card .topline,
@@ -796,8 +796,8 @@
   width: fit-content;
   padding: 2px 8px;
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.14);
-  color: #BFDBFE;
+  background: rgba(179, 31, 126, 0.14);
+  color: #F4D7E8;
   font-size: 0.74rem;
   font-weight: 600;
 }
@@ -837,8 +837,8 @@
   min-height: 0;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: #fff;
+  border: 1px solid var(--border-color);
+  background: var(--surface-panel-strong);
 }
 
 .research-preview-frame {
@@ -846,7 +846,7 @@
   height: 100%;
   min-height: 0;
   border: none;
-  background: #fff;
+  background: var(--surface-panel-strong);
 }
 
 .research-preview-fallback,
@@ -859,12 +859,12 @@
   align-items: center;
   text-align: center;
   gap: 12px;
-  color: #94A3B8;
+  color: var(--text-secondary);
   padding: 24px;
 }
 
 .research-preview-fallback {
-  background: rgba(15, 23, 42, 0.48);
+  background: linear-gradient(135deg, var(--surface-panel), var(--surface-subtle));
 }
 
 .preview-actions {
@@ -937,3 +937,188 @@
     min-height: 52vh;
   }
 }
+
+.research-shell {
+  gap: 22px;
+}
+
+.research-rail,
+.research-query-panel,
+.research-toolbar,
+.research-metric-card,
+.research-trend-card,
+.research-hit-list,
+.research-preview {
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 20px 48px rgba(58, 30, 65, 0.08);
+}
+
+.research-rail {
+  background: linear-gradient(180deg, var(--surface-panel-strong), var(--surface-subtle));
+}
+
+.research-rail-copy h1,
+.guide-title,
+.trend-title,
+.research-hit-list h2,
+.research-preview h2 {
+  color: var(--text-primary);
+}
+
+.research-rail-copy p,
+.research-empty-tab,
+.pane-hint,
+.research-preview-fallback p,
+.research-hit-card .meta,
+.research-hit-card .topline,
+.preview-meta-row {
+  color: var(--text-secondary);
+}
+
+.research-rail-banner,
+.research-guide-card,
+.research-selected-snippet {
+  border-color: rgba(179, 31, 126, 0.16);
+  background: linear-gradient(135deg, var(--surface-subtle), var(--surface-panel));
+}
+
+.eyebrow,
+.research-alert-msg {
+  color: var(--accent-primary);
+}
+
+.research-rail-banner .copy,
+.guide-card .meaning,
+.guide-card code {
+  color: var(--text-secondary);
+}
+
+.research-chip {
+  background: rgba(179, 31, 126, 0.08);
+  border-color: rgba(179, 31, 126, 0.18);
+  color: var(--accent-primary);
+}
+
+.guide-header button {
+  color: var(--accent-primary);
+}
+
+.guide-card {
+  background: var(--surface-panel);
+  border-color: var(--border-color);
+}
+
+.guide-card .operator {
+  color: var(--accent-secondary);
+}
+
+.toggle-btn {
+  color: var(--text-secondary);
+}
+
+.toggle-btn:hover {
+  color: var(--text-primary);
+}
+
+.toggle-btn.active {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow: 0 14px 30px rgba(179, 31, 126, 0.18);
+}
+
+.sample-pill {
+  background: rgba(179, 31, 126, 0.08);
+  border-color: rgba(179, 31, 126, 0.16);
+  color: var(--text-primary);
+}
+
+.sample-pill:hover {
+  background: rgba(179, 31, 126, 0.14);
+  border-color: rgba(179, 31, 126, 0.3);
+}
+
+.research-query-form input {
+  color: var(--text-primary);
+}
+
+.research-query-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.research-tab {
+  border-color: var(--border-color);
+  background: var(--surface-panel-strong);
+  color: var(--text-secondary);
+}
+
+.research-tab.active {
+  border-color: rgba(179, 31, 126, 0.22);
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+}
+
+.research-tab .count {
+  background: rgba(179, 31, 126, 0.1);
+  color: var(--accent-primary);
+}
+
+.research-metric-card .label {
+  color: var(--accent-secondary);
+}
+
+.research-metric-card .value,
+.research-hit-card .company {
+  color: var(--text-primary);
+}
+
+.research-refining-banner {
+  border-color: rgba(179, 31, 126, 0.16);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+}
+
+.research-hit-card {
+  border-color: var(--border-color);
+  background: var(--surface-panel-strong);
+}
+
+.research-hit-card:hover {
+  border-color: rgba(179, 31, 126, 0.24);
+}
+
+.research-hit-card.active {
+  border-color: rgba(179, 31, 126, 0.28);
+  background: var(--surface-subtle);
+}
+
+.research-hit-card .form,
+.research-hit-card .match-reason,
+.selected-match-label {
+  background: rgba(179, 31, 126, 0.1);
+  color: var(--accent-primary);
+}
+
+.research-hit-card .snippet,
+.research-selected-snippet {
+  color: var(--text-primary);
+}
+
+.research-hit-card mark,
+.research-selected-snippet mark {
+  background: rgba(232, 177, 94, 0.22);
+  color: #7b4e12;
+}
+
+.research-preview-frame-wrap {
+  border-color: var(--border-color);
+  background: var(--surface-panel-strong);
+}
+
+.research-preview-fallback,
+.research-empty-state {
+  color: var(--text-secondary);
+  background: linear-gradient(135deg, var(--surface-panel), var(--surface-subtle));
+  border: 1px dashed var(--border-color);
+  border-radius: 16px;
+}
+

@@ -46,7 +46,7 @@ export default function SECEnforcement() {
     { key: 'title', header: 'Title', sortable: true },
     {
       key: 'url', header: 'Link', render: (row) => (
-        <a href={row.url} target="_blank" rel="noopener noreferrer" style={{ color: '#60A5FA', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <a href={row.url} target="_blank" rel="noopener noreferrer" style={{ color: '#D66CAE', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
           View <ExternalLink size={12} />
         </a>
       )
@@ -56,7 +56,7 @@ export default function SECEnforcement() {
   return (
     <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <Gavel size={28} style={{ color: '#60A5FA' }} />
+        <Gavel size={28} style={{ color: '#D66CAE' }} />
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>SEC Enforcement</h1>
       </div>
       <p style={{ color: '#94A3B8', marginBottom: '24px', fontSize: '0.9rem' }}>
@@ -82,3 +82,4 @@ export default function SECEnforcement() {
     </div>
   );
 }
+

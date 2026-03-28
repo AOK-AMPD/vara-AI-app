@@ -39,6 +39,7 @@ import {
 import { buildSearchTrendSummary, executeFilingResearchSearch, type FilingResearchResult, type ResearchSearchMode } from '../services/filingResearch';
 import { generateAgentAnswer, generateFilingSummary, planAgentRun } from '../services/aiApi';
 import { openCleanPrintView } from '../services/filingExport';
+import { BRAND } from '../config/brand';
 import './AIQnA.css';
 
 type SurfaceRoute = 'search' | 'accounting' | 'comment-letters';
@@ -298,7 +299,7 @@ export function AIQnAPanel() {
             }
 
             runtime.latestFiling = latestFiling;
-            runtime.citations.push(buildFilingCitation(latestFiling, 'Latest filing opened by Vara Copilot.'));
+            runtime.citations.push(buildFilingCitation(latestFiling, `Latest filing opened by ${BRAND.copilotName}.`));
             runtime.findings.push(`Found the latest ${formType} for ${latestFiling.companyName} filed on ${latestFiling.filingDate}.`);
             appendAgentLog(runId, { actionId: action.id, type: action.type, title: action.title, detail: `Located ${latestFiling.companyName} ${formType} filed ${latestFiling.filingDate}.`, status: 'completed' });
             continue;
@@ -533,7 +534,7 @@ export function AIQnAPanel() {
               mode: (String(action.input.mode || runtime.searchMode || 'semantic') === 'boolean' ? 'boolean' : 'semantic') as ResearchSearchMode,
               filters: normalizeSearchFilters(action.input.filters || runtime.searchFilters),
               defaultForms: String(action.input.defaultForms || runtime.searchFilters.formTypes.join(',') || '10-K,10-Q'),
-              rationale: String(action.reason || 'Prepared by Vara Copilot from your current research request.'),
+                rationale: String(action.reason || `Prepared by ${BRAND.copilotName} from your current research request.`),
             };
 
             runtime.draftedAlert = draft;
@@ -684,7 +685,7 @@ export function AIQnAPanel() {
       <div className="ai-panel-header">
         <div className="ai-title">
           <Sparkles size={18} className="ai-icon" />
-          <span>Vara Copilot</span>
+          <span>{BRAND.copilotName}</span>
         </div>
         <div className="ai-header-actions">
           {agentRuns.length > 0 && (
@@ -705,7 +706,7 @@ export function AIQnAPanel() {
           </div>
           <div>
             <h3>Structured research copilot</h3>
-            <p>Ask Vara to open filings, set filters, prepare peer cohorts, summarize evidence, and draft alerts for review.</p>
+            <p>Ask {BRAND.shortName} to open filings, set filters, prepare peer cohorts, summarize evidence, and draft alerts for review.</p>
           </div>
         </div>
 
@@ -866,7 +867,7 @@ export function AIQnAPanel() {
           type="text"
           value={inputValue}
           onChange={event => setInputValue(event.target.value)}
-          placeholder="Ask Vara to open filings, compare peers, find comment letters, or draft alerts..."
+          placeholder={`Ask ${BRAND.shortName} to open filings, compare peers, find comment letters, or draft alerts...`}
           disabled={running}
         />
         <button type="submit" disabled={!inputValue.trim() || running} className="send-btn">

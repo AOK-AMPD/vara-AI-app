@@ -64,7 +64,7 @@
 }
 
 .board-nav .nav-btn.active {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(179, 31, 126, 0.15);
   color: var(--accent-blue);
   box-shadow: inset 3px 0 0 var(--accent-blue);
 }
@@ -97,3 +97,4 @@
   /* Enforces rounded corners on table borders */
   background: rgba(10, 15, 30, 0.5);
 }
+

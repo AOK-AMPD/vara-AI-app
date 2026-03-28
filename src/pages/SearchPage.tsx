@@ -40,6 +40,7 @@ import {
 import { buildHighlightTerms, interpretSearchPrompt } from '../services/searchAssist';
 import { looksLikeBooleanQuery } from '../utils/booleanSearch';
 import { canUseInstantElasticsearchSearch } from '../services/filingResearch';
+import { BRAND } from '../config/brand';
 import './SearchPage.css';
 
 const DEFAULT_FORM_SCOPE = '10-K,10-Q,8-K,8-K/A,DEF 14A,20-F,6-K,S-1';
@@ -985,10 +986,10 @@ export default function SearchPage() {
         <div className="research-rail-banner">
           <div>
             <div className="eyebrow">Natural-language search</div>
-            <div className="copy">Vara now rewrites prompts into forms, date windows, auditors, and tighter phrase queries before hitting EDGAR.</div>
+            <div className="copy">{BRAND.shortName} now rewrites prompts into forms, date windows, auditors, and tighter phrase queries before hitting EDGAR.</div>
           </div>
           <button className="secondary-btn" onClick={() => setChatOpen(true)}>
-            <MessageSquare size={16} /> Ask Vara Copilot
+            <MessageSquare size={16} /> Ask {BRAND.copilotName}
           </button>
         </div>
 
@@ -1163,7 +1164,7 @@ export default function SearchPage() {
         {trendReport && (
           <div className="glass-card research-trend-card">
             <div className="trend-title"><Sparkles size={18} /> Trend Report</div>
-            <div className="md-content" style={{ color: '#CBD5E1' }}>
+            <div className="md-content" style={{ color: 'var(--text-secondary)' }}>
               {trendReport.split('\n').map((line, index) => <p key={index}>{line}</p>)}
             </div>
           </div>
@@ -1189,7 +1190,7 @@ export default function SearchPage() {
                 {isRefiningResults && (
                   <div className="research-refining-banner">
                     <Loader2 size={14} className="spinner" />
-                    <span>Showing initial hits while Vara validates filing text and loads more results in the background.</span>
+                <span>Showing initial hits while {BRAND.shortName} validates filing text and loads more results in the background.</span>
                   </div>
                 )}
                 <div className="research-hit-scroll">

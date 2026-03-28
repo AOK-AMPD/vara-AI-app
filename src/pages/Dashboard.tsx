@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { BellRing, Clock, Eye, FileText, Loader2, Plus, RefreshCw, Search as SearchIcon, TrendingUp, X } from 'lucide-react';
 import { useApp } from '../context/AppState';
+import { BRAND } from '../config/brand';
 import { executeFilingResearchSearch } from '../services/filingResearch';
 import { countFilingsByMonth, fetchCompanySubmissions, type SecSubmission, lookupCIK } from '../services/secApi';
 import './Dashboard.css';
@@ -165,7 +166,7 @@ export default function Dashboard() {
     <div className="dashboard-container">
       <header className="page-header">
         <h1>Overview Dashboard</h1>
-        <p>Your personalized compliance intelligence suite.</p>
+        <p>{BRAND.productName} monitoring and benchmarking workspace.</p>
       </header>
 
       <div className="dashboard-grid">
@@ -176,22 +177,23 @@ export default function Dashboard() {
           </div>
           <div className="chart-container">
             {volumeLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: '#64748B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '8px', color: 'var(--text-muted)' }}>
                 <Loader2 size={16} className="spinner" /> Loading filing volume from EDGAR...
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={filingVolumeData} margin={{ top: 5, right: 20, bottom: 5, left: -20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(72, 42, 122, 0.08)" />
+                  <XAxis dataKey="month" stroke="#8F8390" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#8F8390" fontSize={12} tickLine={false} axisLine={false} />
                   <RechartsTooltip
-                    contentStyle={{ backgroundColor: '#1A223B', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                    itemStyle={{ color: '#fff' }}
+                    contentStyle={{ backgroundColor: 'var(--surface-panel-strong)', borderColor: 'rgba(72, 42, 122, 0.16)', borderRadius: '16px' }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
+                    labelStyle={{ color: 'var(--text-secondary)' }}
                   />
-                  <Line type="monotone" dataKey="Tech" stroke="#3B82F6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="Financials" stroke="#8B5CF6" strokeWidth={3} dot={{ r: 4 }} />
-                  <Line type="monotone" dataKey="Auto" stroke="#10B981" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="Tech" stroke="#B31F7E" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="Financials" stroke="#482A7A" strokeWidth={3} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="Auto" stroke="#E8B15E" strokeWidth={3} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -239,7 +241,7 @@ export default function Dashboard() {
                     <div className="company-logo-stub">{ticker[0]}</div>
                     <div>
                       <div className="company-name">{companyName}</div>
-                      <div className="company-ticker">{ticker} {industry ? `• ${industry}` : ''}</div>
+                      <div className="company-ticker">{ticker} {industry ? `| ${industry}` : ''}</div>
                     </div>
                   </div>
                   <div className="latest-filing">
@@ -273,14 +275,14 @@ export default function Dashboard() {
                     setAddError('');
                   }}
                   onKeyDown={event => event.key === 'Enter' && void handleAddTicker()}
-                  style={{ flex: 1, padding: '6px 10px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: '0.85rem' }}
+                  style={{ flex: 1, padding: '9px 12px', borderRadius: '12px', border: '1px solid var(--input-border)', background: 'var(--input-bg)', color: 'var(--text-primary)', fontSize: '0.85rem' }}
                 />
                 <button className="watchlist-add-btn" onClick={() => void handleAddTicker()}>
                   <Plus size={14} /> Add
                 </button>
               </div>
             )}
-            {addError && <div style={{ color: '#F59E0B', fontSize: '0.8rem', marginTop: '4px', paddingLeft: '8px' }}>{addError}</div>}
+            {addError && <div style={{ color: '#B76B21', fontSize: '0.8rem', marginTop: '4px', paddingLeft: '8px' }}>{addError}</div>}
           </div>
         </section>
 
@@ -380,3 +382,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

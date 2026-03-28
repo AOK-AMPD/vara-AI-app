@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Bookmark, MessageSquare, ExternalLink, Columns, Highlighter, Settings2, Download, List, AlertCircle, FileText, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppState';
+import { BRAND } from '../config/brand';
 import { buildSecDocumentUrl, buildSecProxyUrl, fetchCompanySubmissions, fetchFilingText, type SecSubmission } from '../services/secApi';
 import { createPrintWindow, renderCleanPrintView } from '../services/filingExport';
 import { buildDisclosureDiff, downloadTextFile, extractTablesFromHtml, tablesToCsv, type DisclosureDiffSummary } from '../services/filingDetailTools';
@@ -489,7 +490,7 @@ export default function FilingDetail() {
         setIframeLoadedToken(prev => prev + 1);
       }
     } catch {
-      // Cross-origin — can't inspect. TOC unavailable.
+      // Cross-origin - can't inspect. TOC unavailable.
       setTocEntries([]);
       setCurrentFilingSections([]);
       setTocLoading(false);
@@ -787,7 +788,7 @@ export default function FilingDetail() {
             <Settings2 size={18} />
           </button>
           <button className="primary-btn sm ml-2" onClick={() => setChatOpen(true)}>
-            <MessageSquare size={16} /> Ask Vara Copilot
+            <MessageSquare size={16} /> Ask {BRAND.copilotName}
           </button>
         </div>
       </div>
@@ -931,7 +932,7 @@ export default function FilingDetail() {
                   </div>
                   <div className="meta-row">
                     <span className="meta-label">File Number</span>
-                    <span className="meta-value">{filingMeta.fileNumber || 'â€”'}</span>
+                    <span className="meta-value">{filingMeta.fileNumber || '-'}</span>
                   </div>
                   <div className="meta-row">
                     <span className="meta-label">Auditor</span>
@@ -1061,3 +1062,4 @@ export default function FilingDetail() {
     </div>
   );
 }
+

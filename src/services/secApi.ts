@@ -1,7 +1,7 @@
 // Utility for fetching real SEC EDGAR data
 // SEC EDGAR requires a descriptive User-Agent string
 
-const USER_AGENT = import.meta.env.VITE_EDGAR_USER_AGENT || 'Vara AI Research App contact@vara.ai';
+const USER_AGENT = import.meta.env.VITE_EDGAR_USER_AGENT || 'Uniqus Research Center contact@uniqus.com';
 const USE_DIRECT_VERCEL_API = !import.meta.env.DEV;
 const edgarSearchCache = new Map<string, Promise<EdgarSearchHit[]>>();
 

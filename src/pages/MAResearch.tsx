@@ -238,7 +238,7 @@ export default function MAResearch() {
 
           <div className="sidebar-filters" style={{ marginTop: '32px' }}>
             <h4>Data Source</h4>
-            <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '8px' }}>
+            <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(179,31,126,0.05)', border: '1px solid rgba(179,31,126,0.2)', borderRadius: '8px' }}>
               <p style={{ fontSize: '0.8rem', color: '#94A3B8' }}>
                 Deal data sourced from SEC EDGAR full-text search. Click "Extract" on any deal to run AI analysis on the filing text.
               </p>
@@ -306,7 +306,7 @@ export default function MAResearch() {
                           ) : (
                             <button
                               onClick={() => handleExtractDetails(dealFilings.indexOf(deal))}
-                              style={{ background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', color: '#60A5FA', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
+                              style={{ background: 'rgba(179,31,126,0.1)', border: '1px solid rgba(179,31,126,0.3)', color: '#D66CAE', padding: '4px 10px', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}
                             >
                               Extract with AI
                             </button>
@@ -317,7 +317,7 @@ export default function MAResearch() {
                             href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&accession=${deal.accessionNumber}&type=${deal.formType}&dateb=&owner=include&count=1`}
                             target="_blank"
                             rel="noreferrer"
-                            style={{ color: '#60A5FA', fontSize: '0.75rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end', textDecoration: 'none' }}
+                            style={{ color: '#D66CAE', fontSize: '0.75rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'flex-end', textDecoration: 'none' }}
                           >
                             <FileSearch size={14} /> SEC.gov
                           </a>
@@ -365,8 +365,8 @@ export default function MAResearch() {
                         onClick={() => setSelectedClauseFiling(f)}
                         style={{
                           padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem',
-                          background: selectedClauseFiling?.accessionNumber === f.accessionNumber ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${selectedClauseFiling?.accessionNumber === f.accessionNumber ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.05)'}`,
+                          background: selectedClauseFiling?.accessionNumber === f.accessionNumber ? 'rgba(179,31,126,0.15)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${selectedClauseFiling?.accessionNumber === f.accessionNumber ? 'rgba(179,31,126,0.3)' : 'rgba(255,255,255,0.05)'}`,
                           color: 'white'
                         }}
                       >
@@ -415,7 +415,7 @@ export default function MAResearch() {
                   {Object.entries(clauseResults).map(([clauseType, data]) => (
                     <div key={clauseType} style={{ background: '#0F172A', border: '1px solid #334155', borderRadius: '12px', padding: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                        <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#60A5FA' }}>{clauseType}</h3>
+                        <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#D66CAE' }}>{clauseType}</h3>
                         <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{data.section}</span>
                       </div>
                       <p style={{ fontSize: '0.875rem', color: '#94A3B8', lineHeight: 1.6 }}>{data.text}</p>
@@ -445,3 +445,4 @@ export default function MAResearch() {
     </div>
   );
 }
+

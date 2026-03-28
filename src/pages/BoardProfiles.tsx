@@ -143,7 +143,7 @@ export default function BoardProfiles() {
             </div>
             <div className="gov-metric" style={{ marginTop: '12px' }}>
               <span className="text-sm text-slate-400">CEO Pay Ratio</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: '#60A5FA' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1rem', color: '#D66CAE' }}>
                 {boardLoading ? '...' : boardData?.ceoPayRatio || '—'}
               </span>
             </div>
@@ -225,10 +225,10 @@ export default function BoardProfiles() {
                 <div style={{ background: 'rgba(15,23,42,0.5)', border: '1px solid #334155', padding: '24px', borderRadius: '12px' }}>
                   <h3 style={{ fontSize: '0.875rem', color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.025em', marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
                     Gender Identity
-                    <span style={{ color: '#60A5FA', fontWeight: 700 }}>Total: {boardSize}</span>
+                    <span style={{ color: '#D66CAE', fontWeight: 700 }}>Total: {boardSize}</span>
                   </h3>
                   <div style={{ display: 'flex', gap: '24px', height: '160px', alignItems: 'flex-end', marginBottom: '8px' }}>
-                    {[{ label: 'Male', pct: boardData.diversity.malePercent, color: '#3B82F6' },
+                    {[{ label: 'Male', pct: boardData.diversity.malePercent, color: '#B31F7E' },
                       { label: 'Female', pct: boardData.diversity.femalePercent, color: '#A855F7' }].map(bar => {
                       const count = Math.round(boardSize * bar.pct / 100);
                       return (
@@ -259,7 +259,7 @@ export default function BoardProfiles() {
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.875rem', marginBottom: '4px' }}>
                         <span style={{ color: '#CBD5E1' }}>Say-on-Pay Approval</span>
-                        <span style={{ fontWeight: 700, color: '#60A5FA' }}>{boardData.sayOnPayApproval}</span>
+                        <span style={{ fontWeight: 700, color: '#D66CAE' }}>{boardData.sayOnPayApproval}</span>
                       </div>
                     </div>
                     <div>
@@ -272,7 +272,7 @@ export default function BoardProfiles() {
                 </div>
               </div>
 
-              <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+              <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(179,31,126,0.05)', border: '1px solid rgba(179,31,126,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
                 <CheckCircle2 className="text-blue-400" size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
                 <div>
                   <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#DBEAFE', marginBottom: '4px' }}>Data Source</h4>
@@ -337,3 +337,4 @@ export default function BoardProfiles() {
     </div>
   );
 }
+

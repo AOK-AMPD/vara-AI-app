@@ -303,14 +303,14 @@ Write a concise memo with:
                   <button
                     className={`secondary-btn ${researchMode === 'semantic' ? 'active' : ''}`}
                     onClick={() => setResearchMode('semantic')}
-                    style={{ borderColor: researchMode === 'semantic' ? '#3B82F6' : undefined }}
+                    style={{ borderColor: researchMode === 'semantic' ? '#B31F7E' : undefined }}
                   >
                     Semantic
                   </button>
                   <button
                     className={`secondary-btn ${researchMode === 'boolean' ? 'active' : ''}`}
                     onClick={() => setResearchMode('boolean')}
-                    style={{ borderColor: researchMode === 'boolean' ? '#3B82F6' : undefined }}
+                    style={{ borderColor: researchMode === 'boolean' ? '#B31F7E' : undefined }}
                   >
                     Boolean / w/#
                   </button>
@@ -395,7 +395,7 @@ Write a concise memo with:
               </div>
 
               {alertMessage && (
-                <div style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(59,130,246,0.2)', background: 'rgba(59,130,246,0.08)', color: '#BFDBFE' }}>
+                <div style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(179,31,126,0.2)', background: 'rgba(179,31,126,0.08)', color: '#F4D7E8' }}>
                   {alertMessage}
                 </div>
               )}
@@ -407,7 +407,7 @@ Write a concise memo with:
               )}
 
               {(researchMemo || researchMemoLoading) && (
-                <div style={{ borderLeft: '4px solid #3B82F6', background: 'rgba(15,23,42,0.6)', borderRadius: '12px', padding: '16px 18px' }}>
+                <div style={{ borderLeft: '4px solid #B31F7E', background: 'rgba(15,23,42,0.6)', borderRadius: '12px', padding: '16px 18px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                     <Sparkles size={18} className="text-blue-400" />
                     <h3 style={{ margin: 0, color: 'white', fontSize: '1rem' }}>Accounting Research Memo</h3>
@@ -559,3 +559,4 @@ Write a concise memo with:
     </div>
   );
 }
+

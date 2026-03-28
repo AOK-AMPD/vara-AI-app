@@ -80,20 +80,21 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: white;
+  background: var(--surface-panel-strong);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   padding: 0;
   border-radius: 8px;
   font-weight: 600;
   font-size: 0.9rem;
   overflow: visible;
+  box-shadow: 0 12px 24px rgba(72, 42, 122, 0.08);
 }
 
 .selected-company-badge button {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -101,13 +102,13 @@
   padding: 0;
 }
 .selected-company-badge button:hover {
-  color: white;
+  color: var(--text-primary);
 }
 
 .select-input.add-company {
   min-width: 160px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--input-bg);
 }
 
 .legend-group {
@@ -142,8 +143,8 @@
 }
 
 .legend-pill.boilerplate {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--surface-subtle);
+  border-color: var(--border-color);
   color: var(--text-muted);
 }
 
@@ -165,7 +166,7 @@
 .column-header {
   padding: 16px 24px;
   border-bottom: 1px solid var(--glass-border);
-  background: rgba(10, 15, 30, 0.6);
+  background: var(--surface-subtle);
 }
 
 .col-ticker {
@@ -271,9 +272,9 @@
 }
 
 .add-ticker-btn {
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(179, 31, 126, 0.15);
   color: var(--accent-blue);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(179, 31, 126, 0.3);
   border-radius: 6px;
   padding: 8px 14px;
   font-size: 0.8rem;
@@ -283,7 +284,7 @@
   font-family: var(--font-sans);
 }
 .add-ticker-btn:hover:not(:disabled) {
-  background: rgba(59, 130, 246, 0.25);
+  background: rgba(179, 31, 126, 0.25);
 }
 .add-ticker-btn:disabled {
   opacity: 0.4;
@@ -292,10 +293,10 @@
 
 /* Year selector inside company badge */
 .year-select {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  color: white;
+  color: var(--text-primary);
   font-size: 0.75rem;
   font-family: var(--font-mono);
   padding: 2px 4px;
@@ -304,11 +305,11 @@
   max-width: 80px;
 }
 .year-select:focus {
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(179, 31, 126, 0.4);
 }
 .year-select option {
-  background: #1E293B;
-  color: white;
+  background: var(--surface-panel-strong);
+  color: var(--text-primary);
 }
 
 /* View mode toggle buttons */
@@ -360,7 +361,7 @@
 .kpi-card-ticker {
   font-size: 1.15rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-primary);
 }
 
 .kpi-card-fy {
@@ -393,7 +394,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   font-family: var(--font-mono);
-  color: #E2E8F0;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
 }
@@ -413,14 +414,14 @@
 
 .chart-title {
   font-size: 0.85rem;
-  color: #94A3B8;
+  color: var(--chart-text);
   margin-bottom: 16px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .chart-subtitle {
-  color: #475569;
+  color: var(--text-muted);
   font-weight: 400;
 }
 
@@ -431,7 +432,7 @@
 }
 
 .financial-table .table-data-row:hover {
-  background: rgba(59, 130, 246, 0.04);
+  background: rgba(179, 31, 126, 0.04);
 }
 
 /* ===== Responsive ===== */
@@ -455,4 +456,5 @@
     min-width: unset;
   }
 }
+
 

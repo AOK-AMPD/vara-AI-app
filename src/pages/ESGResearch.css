@@ -117,7 +117,7 @@
 }
 
 .fw-icon-wrapper {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 31, 126, 0.1);
   width: 48px;
   height: 48px;
   border-radius: 12px;
@@ -164,7 +164,7 @@
   font-weight: 600;
 }
 
-.badge.sasb { background: rgba(59, 130, 246, 0.2); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
+.badge.sasb { background: rgba(179, 31, 126, 0.2); color: #D66CAE; border: 1px solid rgba(179, 31, 126, 0.3); }
 .badge.gri { background: rgba(245, 158, 11, 0.2); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
 .badge.esrs { background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
 
@@ -255,4 +255,5 @@
   padding-left: 36px;
   width: 100%;
 }
+
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { BellRing, BookOpen, Download, FileSearch, Filter, HelpCircle, Search } from 'lucide-react';
+import { BRAND } from '../config/brand';
 import './SupportCenter.css';
 
 interface GuideSection {
@@ -133,7 +134,7 @@ export default function SupportCenter() {
     <div className="support-container">
       <section className="support-hero">
         <span className="support-kicker">Usage Guide</span>
-        <h1>Learn the Vara AI workflow quickly</h1>
+        <h1>Learn the {BRAND.shortName} workflow quickly</h1>
         <p>
           This page is the practical guide to using the UI well: where to start, how to narrow filings, what the tools actually do, and what limitations you should keep in mind.
         </p>

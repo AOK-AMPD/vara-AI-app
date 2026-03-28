@@ -91,17 +91,17 @@ interface Props {
 }
 
 const inputStyle: React.CSSProperties = {
-  padding: '7px 12px',
-  background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: '8px',
-  color: 'white',
+  padding: '9px 12px',
+  background: 'var(--input-bg)',
+  border: '1px solid var(--input-border)',
+  borderRadius: '12px',
+  color: 'var(--text-primary)',
   fontSize: '0.82rem',
   outline: 'none',
 };
 
 const labelStyle: React.CSSProperties = {
-  color: '#94A3B8',
+  color: 'var(--text-muted)',
   fontSize: '0.72rem',
   fontWeight: 600,
   textTransform: 'uppercase' as const,
@@ -115,10 +115,10 @@ const chipStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '4px',
   padding: '2px 8px',
-  borderRadius: '4px',
-  background: 'rgba(59,130,246,0.12)',
-  border: '1px solid rgba(59,130,246,0.3)',
-  color: '#60A5FA',
+  borderRadius: '999px',
+  background: 'var(--surface-subtle)',
+  border: '1px solid rgba(179,31,126,0.2)',
+  color: 'var(--accent-primary)',
   fontSize: '0.73rem',
   fontWeight: 500,
 };
@@ -135,10 +135,10 @@ const selectStyle: React.CSSProperties = {
 
 const pillBtnStyle = (active: boolean): React.CSSProperties => ({
   padding: '3px 10px',
-  borderRadius: '6px',
-  border: `1px solid ${active ? '#3B82F6' : 'rgba(255,255,255,0.1)'}`,
-  background: active ? 'rgba(59,130,246,0.12)' : 'transparent',
-  color: active ? '#60A5FA' : '#94A3B8',
+  borderRadius: '999px',
+  border: `1px solid ${active ? 'rgba(179,31,126,0.36)' : 'var(--border-color)'}`,
+  background: active ? 'rgba(179,31,126,0.1)' : 'var(--surface-panel)',
+  color: active ? 'var(--accent-primary)' : 'var(--text-secondary)',
   cursor: 'pointer',
   fontSize: '0.76rem',
   fontWeight: active ? 600 : 400,
@@ -148,11 +148,11 @@ const pillBtnStyle = (active: boolean): React.CSSProperties => ({
 function CollapsibleSection({ title, defaultOpen = false, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: open ? '12px' : '0' }}>
+    <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: open ? '12px' : '0' }}>
       <button onClick={() => setOpen(!open)} style={{
         display: 'flex', alignItems: 'center', gap: '6px', width: '100%',
         background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0',
-        color: '#CBD5E1', fontSize: '0.8rem', fontWeight: 600, textAlign: 'left',
+        color: 'var(--text-primary)', fontSize: '0.8rem', fontWeight: 600, textAlign: 'left',
       }}>
         {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
         {title}
@@ -227,9 +227,9 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
         style={{
           display: 'flex', alignItems: 'center', gap: '6px',
           padding: '6px 14px', borderRadius: '8px',
-          border: '1px solid rgba(255,255,255,0.1)',
-          background: expanded ? 'rgba(59,130,246,0.08)' : 'rgba(255,255,255,0.03)',
-          color: expanded ? '#60A5FA' : '#94A3B8',
+          border: '1px solid var(--border-color)',
+          background: expanded ? 'var(--surface-subtle)' : 'var(--surface-panel)',
+          color: expanded ? 'var(--accent-primary)' : 'var(--text-secondary)',
           cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500,
           transition: 'all 0.15s',
           marginBottom: expanded ? '12px' : '0',
@@ -238,7 +238,7 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
         <Filter size={14} />
         Advanced Filters
         {activeCount > 0 && (
-          <span style={{ background: '#3B82F6', color: 'white', borderRadius: '10px', padding: '0 6px', fontSize: '0.7rem', fontWeight: 700, minWidth: '18px', textAlign: 'center' }}>
+          <span style={{ background: '#B31F7E', color: 'white', borderRadius: '10px', padding: '0 6px', fontSize: '0.7rem', fontWeight: 700, minWidth: '18px', textAlign: 'center' }}>
             {activeCount}
           </span>
         )}
@@ -256,13 +256,13 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
           {chips.slice(0, 4).map((c, i) => (
             <span key={i} style={chipStyle}>
               {c.label}
-              <button onClick={c.clear} style={{ background: 'none', border: 'none', color: '#60A5FA', cursor: 'pointer', padding: 0 }}>
+              <button onClick={c.clear} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', padding: 0 }}>
                 <X size={10} />
               </button>
             </span>
           ))}
           {chips.length > 4 && (
-            <span style={{ color: '#64748B', fontSize: '0.74rem' }}>+{chips.length - 4} more</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>+{chips.length - 4} more</span>
           )}
           <button onClick={handleClear} style={{ background: 'none', border: 'none', color: '#F87171', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500 }}>
             Clear All
@@ -273,8 +273,8 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
       {/* Expanded filter panel */}
       {expanded && (
         <div style={{
-          background: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--surface-panel)',
+          border: '1px solid var(--border-color)',
           borderRadius: '12px',
           padding: '16px 20px',
           display: 'flex',
@@ -282,7 +282,7 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
           gap: '4px',
         }}>
           {/* Row 1: Core filters — always visible */}
-          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-end', paddingBottom: '12px', borderBottom: '1px solid var(--border-color)' }}>
             {config.showEntityName !== false && (
               <div style={{ minWidth: '180px', flex: '1 1 180px' }}>
                 <label style={labelStyle}>Company / Entity</label>
@@ -431,7 +431,7 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
           {/* Expert filters */}
           {(config.showAccessionNumber || config.showFileNumber) && (
             <CollapsibleSection title="Expert Filters">
-              <div style={{ color: '#64748B', fontSize: '0.74rem', marginBottom: '10px' }}>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.74rem', marginBottom: '10px' }}>
                 Use accession or file number only when you already know the exact filing you want.
               </div>
               <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -454,12 +454,12 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
           )}
 
           {/* Active chips & apply */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '12px', borderTop: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center', flex: 1, minWidth: 0 }}>
               {chips.map((c, i) => (
                 <span key={i} style={chipStyle}>
                   {c.label}
-                  <button onClick={c.clear} style={{ background: 'none', border: 'none', color: '#60A5FA', cursor: 'pointer', padding: 0 }}><X size={10} /></button>
+                  <button onClick={c.clear} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', padding: 0 }}><X size={10} /></button>
                 </span>
               ))}
               {activeCount > 0 && (
@@ -467,10 +467,10 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
                   Clear All
                 </button>
               )}
-              {activeCount === 0 && <span style={{ color: '#475569', fontSize: '0.78rem' }}>No filters applied</span>}
+              {activeCount === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>No filters applied</span>}
             </div>
             <button onClick={onSearch} disabled={loading} style={{
-              padding: '7px 18px', background: '#3B82F6', color: 'white', border: 'none', borderRadius: '8px',
+              padding: '8px 18px', background: 'linear-gradient(135deg, #B31F7E, #482A7A)', color: 'white', border: 'none', borderRadius: '999px',
               cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: '12px',
             }}>
               Apply & Search

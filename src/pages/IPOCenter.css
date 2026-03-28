@@ -230,7 +230,7 @@
 }
 
 .ipo-prospectus-link {
-  color: #60A5FA;
+  color: #D66CAE;
   font-size: 0.75rem;
   font-weight: 500;
   display: flex;
@@ -241,7 +241,7 @@
 }
 
 .ipo-prospectus-link:hover {
-  color: #93C5FD;
+  color: #F1B8D7;
 }
 
 /* Benchmarking */
@@ -308,7 +308,7 @@
   transition: width 0.6s ease;
 }
 
-.benchmark-bar-fill.blue { background: #3B82F6; }
+.benchmark-bar-fill.blue { background: #B31F7E; }
 .benchmark-bar-fill.gray { background: #94A3B8; }
 .benchmark-bar-fill.purple { background: #A78BFA; }
 
@@ -496,7 +496,7 @@
 
 .s1-search-input-wrapper input:focus {
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 2px rgba(179, 31, 126, 0.15);
 }
 
 .s1-quick-tickers {
@@ -523,9 +523,9 @@
 }
 
 .s1-ticker-pill:hover {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #60A5FA;
+  background: rgba(179, 31, 126, 0.15);
+  border-color: rgba(179, 31, 126, 0.3);
+  color: #D66CAE;
 }
 
 /* Loading */
@@ -578,8 +578,8 @@
 }
 
 .s1-result-card:hover {
-  background: rgba(59, 130, 246, 0.08);
-  border-color: rgba(59, 130, 246, 0.25);
+  background: rgba(179, 31, 126, 0.08);
+  border-color: rgba(179, 31, 126, 0.25);
 }
 
 .s1-result-info {
@@ -630,7 +630,7 @@
 }
 
 .s1-result-card:hover .s1-result-arrow {
-  color: #60A5FA;
+  color: #D66CAE;
 }
 
 /* No Results */
@@ -972,3 +972,4 @@
     flex-wrap: wrap;
   }
 }
+

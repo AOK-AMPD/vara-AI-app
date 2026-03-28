@@ -5,24 +5,26 @@ import {
   Search, LayoutDashboard, BarChart2, MessageSquare, Menu,
   BookOpen, Globe, Users, Briefcase, Handshake, Code, LifeBuoy,
   TrendingUp, UserCheck, Mail, ShieldCheck, Gavel, Scale,
-  FileSearch, DollarSign, Mic, ClipboardList
+  FileSearch, DollarSign, Mic, ClipboardList, Moon, Sun
 } from 'lucide-react';
 import { useApp } from '../../context/AppState';
-import { VaraLogo } from '../../pages/LandingPage';
+import { URCBrandLockup } from '../brand/URCBrand';
+import { BRAND } from '../../config/brand';
 import { clerkEnabled } from '../../services/auth';
 import './Layout.css';
 
 export function Sidebar() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
+  const { themeMode } = useApp();
+  const brandTone = themeMode === 'dark' ? 'light' : 'dark';
 
   if (isLanding) return null; // No sidebar on landing page
 
   return (
     <aside className="sidebar glass-card" style={{ overflowY: 'auto' }}>
       <div className="sidebar-logo">
-        <VaraLogo size={24} />
-        <span>Vara</span>
+        <URCBrandLockup size={28} compact tone={brandTone} showParent className="sidebar-brand-lockup" />
       </div>
 
       <nav className="sidebar-nav">
@@ -124,7 +126,9 @@ export function Sidebar() {
 export function Navbar() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
-  const { setChatOpen, setCurrentPageContext } = useApp();
+  const { setChatOpen, setCurrentPageContext, themeMode, toggleThemeMode } = useApp();
+  const nextThemeLabel = themeMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  const brandTone = themeMode === 'dark' ? 'light' : 'dark';
 
   useEffect(() => {
     const pageLabels: Record<string, string> = {
@@ -154,8 +158,7 @@ export function Navbar() {
     <header className={`navbar ${isLanding ? 'landing-nav' : ''}`}>
       {isLanding && (
         <div className="navbar-logo">
-          <VaraLogo size={24} />
-          <span>Vara</span>
+          <URCBrandLockup size={26} tone={brandTone} showParent className="navbar-brand-lockup" />
         </div>
       )}
       
@@ -168,13 +171,20 @@ export function Navbar() {
       <div className="navbar-spacer"></div>
 
       <div className="navbar-actions">
+        <button className="theme-toggle-btn" onClick={toggleThemeMode} title={nextThemeLabel} type="button">
+          {themeMode === 'dark' ? <Moon size={17} /> : <Sun size={17} />}
+          <span className="theme-toggle-copy">
+            <strong>{themeMode === 'dark' ? 'Dark mode' : 'Light mode'}</strong>
+            <span>{themeMode === 'dark' ? 'Switches to light surfaces' : 'Switches to darker viewing'}</span>
+          </span>
+        </button>
         {!isLanding && (
-          <button className="copilot-entry-btn" onClick={() => setChatOpen(true)} title="Open Vara Copilot">
+          <button className="copilot-entry-btn" onClick={() => setChatOpen(true)} title={`Open ${BRAND.copilotName}`}>
             <span className="copilot-entry-ping" />
             <MessageSquare size={18} />
             <span className="copilot-entry-copy">
-              <strong>Ask Vara Copilot</strong>
-              <span>Natural-language search</span>
+              <strong>{BRAND.copilotName}</strong>
+              <span>Plan, search, and cite</span>
             </span>
           </button>
         )}
@@ -199,7 +209,7 @@ export function Navbar() {
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: 'vara-clerk-avatar',
+                    avatarBox: 'urc-clerk-avatar',
                   },
                 }}
               />

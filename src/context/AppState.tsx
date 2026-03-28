@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { ChatMessage } from '../types';
 import type { SearchFilters } from '../components/filters/SearchFilterBar';
 import type { FilingResearchResult, ResearchSearchMode } from '../services/filingResearch';
+import { BRAND } from '../config/brand';
 import type {
   AgentActionLogEntry,
   AgentRun,
@@ -57,6 +58,8 @@ export interface SavedAlert {
   latestResultCount: number;
 }
 
+export type ThemeMode = 'light' | 'dark';
+
 interface AppContextType {
   watchlist: string[];
   addToWatchlist: (ticker: string) => void;
@@ -69,6 +72,10 @@ interface AppContextType {
 
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  themeMode: ThemeMode;
+  setThemeMode: (mode: ThemeMode) => void;
+  toggleThemeMode: () => void;
 
   currentPageContext: PageContext;
   setCurrentPageContext: (ctx: PageContext) => void;
@@ -115,6 +122,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const WATCHLIST_STORAGE_KEY = 'vara.watchlist.v1';
 const ALERTS_STORAGE_KEY = 'vara.alerts.v1';
+const THEME_STORAGE_KEY = 'urc.theme.v1';
 
 function loadStoredJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -126,16 +134,28 @@ function loadStoredJson<T>(key: string, fallback: T): T {
   }
 }
 
+function loadThemeMode(): ThemeMode {
+  if (typeof window === 'undefined') return 'light';
+
+  const storedMode = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (storedMode === 'light' || storedMode === 'dark') {
+    return storedMode;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [watchlist, setWatchlist] = useState<string[]>(() => loadStoredJson(WATCHLIST_STORAGE_KEY, ['AAPL', 'MSFT']));
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([{
     id: 'init-msg',
     role: 'ai',
-    content: "Hi! I'm **Vara AI**, your SEC compliance assistant. Ask me anything about filings, language comparisons, or specific company disclosures.",
+    content: `Hi! I'm **${BRAND.productName}**, your SEC compliance assistant. Ask me anything about filings, language comparisons, or specific company disclosures.`,
     timestamp: new Date().toISOString()
   }]);
   const [isChatOpen, setChatOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [themeMode, setThemeMode] = useState<ThemeMode>(loadThemeMode);
   const [currentPageContext, setCurrentPageContext] = useState<PageContext>({ path: '/', label: 'Home' });
   const [currentFilingContext, setCurrentFilingContext] = useState<FilingContext | null>(null);
   const [currentFilingSections, setCurrentFilingSections] = useState<FilingSectionReference[]>([]);
@@ -160,6 +180,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(ALERTS_STORAGE_KEY, JSON.stringify(savedAlerts));
     }
   }, [savedAlerts]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
+    }
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.theme = themeMode;
+      document.documentElement.style.colorScheme = themeMode;
+    }
+  }, [themeMode]);
 
   const addToWatchlist = (ticker: string) => {
     const upper = ticker.toUpperCase().trim();
@@ -261,6 +291,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSavedAlerts(prev => prev.filter(alert => alert.id !== id));
   };
 
+  const toggleThemeMode = () => {
+    setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   const confirmPendingAlertDraft = () => {
     if (!pendingAlertDraft) return;
 
@@ -283,6 +317,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       chatHistory, addChatMessage,
       isChatOpen, setChatOpen,
       searchQuery, setSearchQuery,
+      themeMode, setThemeMode, toggleThemeMode,
       currentPageContext, setCurrentPageContext,
       currentFilingContext, setCurrentFilingContext,
       currentFilingSections, setCurrentFilingSections,

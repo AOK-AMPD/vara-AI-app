@@ -95,8 +95,8 @@
 }
 
 .rss-news-card:hover {
-  border-color: rgba(59, 130, 246, 0.3);
-  background: rgba(59, 130, 246, 0.04);
+  border-color: rgba(179, 31, 126, 0.3);
+  background: rgba(179, 31, 126, 0.04);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
@@ -159,12 +159,12 @@
   gap: 12px;
   padding: 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-subtle);
   transition: background 0.2s;
 }
 
 .trending-item:hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 31, 126, 0.1);
 }
 
 .trending-item .rank {
@@ -183,7 +183,7 @@
 .trending-item .count {
   font-size: 0.85rem;
   color: var(--accent-blue);
-  background: rgba(59, 130, 246, 0.15);
+  background: rgba(179, 31, 126, 0.15);
   padding: 4px 8px;
   border-radius: 12px;
 }
@@ -213,8 +213,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,8 +279,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px dashed rgba(59, 130, 246, 0.3);
+  background: rgba(179, 31, 126, 0.1);
+  border: 1px dashed rgba(179, 31, 126, 0.3);
   color: var(--accent-blue);
   padding: 8px 16px;
   border-radius: 8px;
@@ -292,7 +292,7 @@
   justify-content: center;
 }
 .watchlist-add-btn:hover {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(179, 31, 126, 0.2);
   border-color: var(--accent-blue);
 }
 
@@ -341,7 +341,7 @@
 }
 
 .header-row {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-subtle);
   font-weight: 600;
   font-size: 0.9rem;
   color: var(--text-secondary);
@@ -383,7 +383,7 @@
 }
 
 .heatmap-cell.empty {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-subtle);
   color: var(--text-muted);
   text-shadow: none;
 }
@@ -407,3 +407,80 @@
   height: 12px;
   border-radius: 2px;
 }
+
+.dashboard-container .glass-card {
+  background: var(--surface-panel);
+  border-color: var(--border-color);
+}
+
+.page-header h1 {
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.card-header {
+  border-bottom-color: var(--border-color);
+}
+
+.rss-news-card {
+  background: var(--surface-panel-strong);
+  border-color: var(--border-color);
+  border-radius: 18px;
+}
+
+.rss-news-card:hover {
+  border-color: rgba(179, 31, 126, 0.24);
+  background: var(--surface-subtle);
+  box-shadow: 0 18px 42px rgba(58, 30, 65, 0.08);
+}
+
+.rss-timestamp,
+.trending-item .count,
+.text-blue {
+  color: var(--accent-primary);
+}
+
+.trending-item {
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+}
+
+.trending-item:hover {
+  background: var(--surface-panel);
+}
+
+.trending-item .count {
+  background: rgba(179, 31, 126, 0.08);
+}
+
+.watchlist-item {
+  border-color: var(--border-color);
+  border-radius: 16px;
+  background: var(--surface-panel-strong);
+}
+
+.company-logo-stub {
+  background: linear-gradient(135deg, rgba(179, 31, 126, 0.12), rgba(72, 42, 122, 0.12));
+  border-color: rgba(72, 42, 122, 0.12);
+  color: var(--accent-secondary);
+}
+
+.f-badge {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 999px;
+  padding: 4px 9px;
+}
+
+.watchlist-add-btn {
+  background: rgba(179, 31, 126, 0.08);
+  border: 1px dashed rgba(179, 31, 126, 0.24);
+  color: var(--accent-primary);
+  border-radius: 14px;
+}
+
+.watchlist-add-btn:hover {
+  background: rgba(179, 31, 126, 0.12);
+  border-color: rgba(179, 31, 126, 0.4);
+}
+

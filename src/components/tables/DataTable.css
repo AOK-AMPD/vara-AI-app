@@ -42,7 +42,7 @@
 }
 
 .data-table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.03);
+  background: rgba(179, 31, 126, 0.03);
 }
 
 .data-table tbody tr.dt-clickable {
@@ -97,5 +97,6 @@
 }
 
 .dt-page-btns button:not(:disabled):hover {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(179, 31, 126, 0.1);
 }
+

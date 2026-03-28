@@ -208,10 +208,10 @@ export function buildHeuristicAgentPlan(prompt: string, context: AgentContextSna
     }
 
     if (sectionHint) {
-      actions.push(makeAction('open_filing', 'Open filing', { useLatestResolvedFiling: true }, 'Open the filing inside Vara.'));
+      actions.push(makeAction('open_filing', 'Open filing', { useLatestResolvedFiling: true }, 'Open the filing inside URC.'));
       actions.push(makeAction('jump_to_section', `Jump to ${sectionHint}`, { sectionLabel: sectionHint }, 'Navigate to the most relevant section automatically.'));
     } else if (targetCompany || context.filing) {
-      actions.push(makeAction('open_filing', 'Open filing', { useLatestResolvedFiling: true }, 'Open the filing inside Vara.'));
+      actions.push(makeAction('open_filing', 'Open filing', { useLatestResolvedFiling: true }, 'Open the filing inside URC.'));
     }
 
     if (isSummaryRequest || normalizedPrompt.includes('important parts')) {

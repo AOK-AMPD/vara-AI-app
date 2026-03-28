@@ -46,7 +46,7 @@
 }
 
 .section-matrix tbody tr:hover {
-  background: rgba(59, 130, 246, 0.03);
+  background: rgba(179, 31, 126, 0.03);
 }
 
 .sm-section-label {
@@ -70,7 +70,7 @@
 }
 
 .sm-cell.clickable:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(179, 31, 126, 0.08);
 }
 
 .sm-check {
@@ -88,3 +88,4 @@
   color: #64748B;
   font-size: 0.9rem;
 }
+

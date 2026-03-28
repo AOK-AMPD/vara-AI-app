@@ -5,6 +5,7 @@ import type {
   FilingLocator,
   FilingSectionSnippet,
 } from '../types/agent';
+import { BRAND } from '../config/brand';
 import { buildHeuristicAgentPlan, sanitizeAgentPlan } from './agentPlanner';
 
 const CLAUDE_API_ENDPOINT = '/api/claude';
@@ -56,7 +57,7 @@ function getUserFacingError(error: unknown, fallback: string): string {
 
 export async function askAi(question: string, context?: string): Promise<string> {
   try {
-    let prompt = `You are an expert AI assistant for Vara AI, an SEC Compliance Intelligence Platform. You help financial, legal, and compliance professionals understand SEC filings.\n\n`;
+    let prompt = `You are an expert AI assistant for ${BRAND.productName}, an SEC compliance intelligence platform. You help financial, legal, and compliance professionals understand SEC filings.\n\n`;
 
     if (context) {
       prompt += `CONTEXT FROM CURRENT PREVIEWED DOCUMENT / SEARCH:\n${context}\n\n`;
@@ -74,7 +75,7 @@ export async function askAi(question: string, context?: string): Promise<string>
 
 export async function aiSummarize(text: string): Promise<string> {
   try {
-    return await callClaude(`You are an SEC compliance expert for Vara AI. ${text}`, {
+    return await callClaude(`You are an SEC compliance expert for ${BRAND.productName}. ${text}`, {
       maxTokens: 1400,
       temperature: 0.2,
     });
@@ -98,7 +99,7 @@ export async function aiAnalyzeS1(filingText: string, section: string): Promise<
     const sectionPrompt = sectionPrompts[section] || sectionPrompts['overview'];
     const truncatedText = filingText.length > 60000 ? filingText.substring(0, 60000) + '\n\n[... Document truncated for analysis ...]' : filingText;
 
-    const prompt = `You are a senior IPO analyst for Vara AI, an SEC Compliance Intelligence Platform. You are analyzing an S-1 registration statement filed with the SEC.
+    const prompt = `You are a senior IPO analyst for ${BRAND.productName}, an SEC compliance intelligence platform. You are analyzing an S-1 registration statement filed with the SEC.
 
 ${sectionPrompt}
 
@@ -187,7 +188,7 @@ export async function planAgentRun(prompt: string, context: AgentContextSnapshot
   const fallbackPlan = buildHeuristicAgentPlan(prompt, context);
 
   try {
-    const planningPrompt = `You are Vara Copilot, a structured planning model for an SEC research platform.
+    const planningPrompt = `You are ${BRAND.copilotName}, a structured planning model for an SEC research platform.
 
 Return ONLY valid JSON with this schema:
 {
@@ -233,7 +234,7 @@ export async function generateAgentAnswer(
   context: AgentContextSnapshot
 ): Promise<string> {
   try {
-    const prompt = `You are Vara Copilot, an SEC accounting and disclosure research assistant.
+    const prompt = `You are ${BRAND.copilotName}, an SEC accounting and disclosure research assistant.
 
 Write a concise, practical answer based only on the evidence below.
 - Start with a short executive summary.
@@ -284,7 +285,7 @@ export async function generateFilingSummary(
       excerpt: section.excerpt,
     }));
 
-    const prompt = `You are Vara Copilot summarizing an SEC filing for an accounting research user.
+    const prompt = `You are ${BRAND.copilotName} summarizing an SEC filing for an accounting research user.
 
 Filing:
 ${JSON.stringify(locator, null, 2)}
@@ -431,7 +432,7 @@ ${truncateText(agreementText)}`;
 
 export async function aiAscLookup(query: string): Promise<string> {
   try {
-    const prompt = `You are an expert technical accountant for Vara AI. The user is asking a question about accounting standards (e.g., US GAAP, FASB ASC, IFRS). Provide a clear, structured summary citing specific ASC topics/subtopics where applicable. Be direct and professional. USER QUERY: ${query}`;
+  const prompt = `You are an expert technical accountant for ${BRAND.productName}. The user is asking a question about accounting standards (e.g., US GAAP, FASB ASC, IFRS). Provide a clear, structured summary citing specific ASC topics/subtopics where applicable. Be direct and professional. USER QUERY: ${query}`;
     return await callClaude(prompt, { maxTokens: 1400, temperature: 0.2 });
   } catch (error) {
     console.error('Claude ASC Error:', error);

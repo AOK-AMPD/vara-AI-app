@@ -265,9 +265,9 @@ export default function ESGResearch() {
                       key={metric}
                       onClick={() => setSelectedMapping(selectedMapping === metric ? null : metric)}
                       style={{
-                        padding: '12px 16px', background: selectedMapping === metric ? 'rgba(59,130,246,0.08)' : '#0F172A',
+                        padding: '12px 16px', background: selectedMapping === metric ? 'rgba(179,31,126,0.08)' : '#0F172A',
                         borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        border: `1px solid ${selectedMapping === metric ? 'rgba(59,130,246,0.3)' : 'rgba(51,65,85,0.5)'}`,
+                        border: `1px solid ${selectedMapping === metric ? 'rgba(179,31,126,0.3)' : 'rgba(51,65,85,0.5)'}`,
                         cursor: 'pointer', transition: 'all 0.15s'
                       }}
                     >
@@ -327,7 +327,7 @@ export default function ESGResearch() {
                       <tr
                         key={idx}
                         onClick={() => handleMetricClick(row.topic)}
-                        style={{ borderBottom: '1px solid rgba(51,65,85,0.5)', cursor: 'pointer', background: selectedMetric === row.topic ? 'rgba(59,130,246,0.05)' : 'transparent' }}
+                        style={{ borderBottom: '1px solid rgba(51,65,85,0.5)', cursor: 'pointer', background: selectedMetric === row.topic ? 'rgba(179,31,126,0.05)' : 'transparent' }}
                       >
                         <td style={{ padding: '16px', color: '#CBD5E1', fontSize: '0.875rem', fontWeight: 500 }}>{row.topic}</td>
                         {ESG_TICKERS.map(t => (
@@ -342,7 +342,7 @@ export default function ESGResearch() {
               </div>
 
               {selectedMetric && (
-                <div style={{ marginTop: '16px', padding: '20px', background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '12px', animation: 'fadeIn 0.2s ease-out' }}>
+                <div style={{ marginTop: '16px', padding: '20px', background: 'rgba(179,31,126,0.05)', border: '1px solid rgba(179,31,126,0.2)', borderRadius: '12px', animation: 'fadeIn 0.2s ease-out' }}>
                   <h4 style={{ color: 'white', marginBottom: '8px' }}>{selectedMetric}</h4>
                   <p style={{ color: '#94A3B8', fontSize: '0.875rem', lineHeight: 1.6 }}>
                     AI-rated disclosure depth based on the latest 10-K filing from SEC EDGAR. Click a different topic to compare.
@@ -402,7 +402,7 @@ export default function ESGResearch() {
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ background: 'rgba(37,99,235,0.2)', color: '#60A5FA', fontWeight: 700, padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem' }}>8-K</div>
+                        <div style={{ background: 'rgba(37,99,235,0.2)', color: '#D66CAE', fontWeight: 700, padding: '4px 8px', borderRadius: '4px', fontSize: '0.875rem' }}>8-K</div>
                         <h4 style={{ color: 'white', fontWeight: 500, margin: 0 }}>{ts.company}</h4>
                       </div>
                       <div style={{ color: '#94A3B8', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -423,3 +423,4 @@ export default function ESGResearch() {
     </div>
   );
 }
+
