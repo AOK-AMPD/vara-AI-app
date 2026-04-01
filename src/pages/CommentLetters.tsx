@@ -24,6 +24,8 @@ const cardStyle: React.CSSProperties = {
   transition: 'border-color 0.2s',
 };
 
+const COMMENT_LETTERS_USE_ELASTICSEARCH = true;
+
 export default function CommentLetters() {
   const navigate = useNavigate();
   const { pendingSearchIntent, setPendingSearchIntent, setActiveSearchContext } = useApp();
@@ -42,6 +44,7 @@ export default function CommentLetters() {
           filters: { ...defaultSearchFilters },
           defaultForms: 'CORRESP,UPLOAD',
           limit: 8,
+          useElasticsearch: COMMENT_LETTERS_USE_ELASTICSEARCH,
         });
         setRecentItems(matches.map(match => ({
           entityName: match.entityName,
@@ -67,6 +70,7 @@ export default function CommentLetters() {
         filters,
         defaultForms: 'CORRESP,UPLOAD',
         limit: 50,
+        useElasticsearch: COMMENT_LETTERS_USE_ELASTICSEARCH,
       });
       setActiveSearchContext({
         surface: 'comment-letters',

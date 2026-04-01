@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { buildClaudeRequest, createClaudeMessage } from './api/_lib/claude.js'
 import secProxyHandler from './api/sec-proxy.js'
@@ -157,35 +157,39 @@ const eftsProxyOptions = {
   },
 };
 
-export default defineConfig({
-  plugins: [react(), claudeDevApiPlugin],
-  server: {
-    proxy: {
-      '/sec-proxy': {
-        ...secProxyOptions,
-        rewrite: (path) => path.replace(/^\/sec-proxy/, '')
-      },
-      // Proxy for data.sec.gov (XBRL companyfacts + submissions)
-      '/sec-data': {
-        ...secDataProxyOptions,
-        rewrite: (path) => path.replace(/^\/sec-data/, '')
-      },
-      // Proxy for efts.sec.gov (full-text search)
-      '/sec-efts': {
-        ...eftsProxyOptions,
-        rewrite: (path) => path.replace(/^\/sec-efts/, '')
-      },
-      '/ix': secProxyOptions,
-      '/ixviewer': secProxyOptions,
-      '/Archives': secProxyOptions,
-      '/include': secProxyOptions,
-      '/files': secProxyOptions,
-      '/assets': secProxyOptions,
-      '/cdata': secProxyOptions,
-      '/js': secProxyOptions,
-      '/css': secProxyOptions,
-      '/images': secProxyOptions
+export default defineConfig(({ mode }) => {
+  // Make .env values available to Vite middleware handlers that read process.env.
+  Object.assign(process.env, loadEnv(mode, process.cwd(), ''))
+
+  return {
+    plugins: [react(), claudeDevApiPlugin],
+    server: {
+      proxy: {
+        '/sec-proxy': {
+          ...secProxyOptions,
+          rewrite: (path) => path.replace(/^\/sec-proxy/, '')
+        },
+        // Proxy for data.sec.gov (XBRL companyfacts + submissions)
+        '/sec-data': {
+          ...secDataProxyOptions,
+          rewrite: (path) => path.replace(/^\/sec-data/, '')
+        },
+        // Proxy for efts.sec.gov (full-text search)
+        '/sec-efts': {
+          ...eftsProxyOptions,
+          rewrite: (path) => path.replace(/^\/sec-efts/, '')
+        },
+        '/ix': secProxyOptions,
+        '/ixviewer': secProxyOptions,
+        '/Archives': secProxyOptions,
+        '/include': secProxyOptions,
+        '/files': secProxyOptions,
+        '/assets': secProxyOptions,
+        '/cdata': secProxyOptions,
+        '/js': secProxyOptions,
+        '/css': secProxyOptions,
+        '/images': secProxyOptions
+      }
     }
   }
 })
-

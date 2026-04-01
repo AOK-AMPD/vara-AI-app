@@ -1,123 +1,113 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  Search, LayoutDashboard, BarChart2, MessageSquare, Menu,
+  Search, LayoutDashboard, BarChart2, MessageSquare, Menu, ChevronLeft, ChevronRight,
   BookOpen, Globe, Users, Briefcase, Handshake, Code, LifeBuoy,
   TrendingUp, UserCheck, Mail, ShieldCheck, Gavel, Scale,
   FileSearch, DollarSign, Mic, ClipboardList, Moon, Sun
 } from 'lucide-react';
 import { useApp } from '../../context/AppState';
-import { URCBrandLockup } from '../brand/URCBrand';
+import { URCBrandLockup, URCBrandMark } from '../brand/URCBrand';
 import { BRAND } from '../../config/brand';
 import { clerkEnabled } from '../../services/auth';
 import './Layout.css';
 
+function SidebarNavItem({
+  to,
+  label,
+  icon,
+  isSidebarCollapsed,
+}: {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  isSidebarCollapsed: boolean;
+}) {
+  return (
+    <NavLink
+      to={to}
+      title={isSidebarCollapsed ? label : undefined}
+      aria-label={label}
+      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+    >
+      {icon}
+      <span>{label}</span>
+    </NavLink>
+  );
+}
+
 export function Sidebar() {
   const location = useLocation();
   const isLanding = location.pathname === '/';
-  const { themeMode } = useApp();
+  const { themeMode, isSidebarCollapsed, toggleSidebarCollapsed } = useApp();
   const brandTone = themeMode === 'dark' ? 'light' : 'dark';
 
   if (isLanding) return null; // No sidebar on landing page
 
   return (
-    <aside className="sidebar glass-card" style={{ overflowY: 'auto' }}>
+    <aside className={`sidebar glass-card ${isSidebarCollapsed ? 'collapsed' : ''}`} style={{ overflowY: 'auto' }}>
+      {isSidebarCollapsed && (
+        <button
+          type="button"
+          className="sidebar-expand-handle"
+          onClick={toggleSidebarCollapsed}
+          aria-label="Expand side navigation"
+          title="Expand navigation"
+        >
+          <ChevronRight size={16} />
+        </button>
+      )}
       <div className="sidebar-logo">
-        <URCBrandLockup size={28} compact tone={brandTone} showParent className="sidebar-brand-lockup" />
+        {isSidebarCollapsed ? (
+          <div className="sidebar-brand-mark-shell" aria-label={BRAND.parentName} title={BRAND.parentName}>
+            <URCBrandMark size={34} tone={brandTone} className="sidebar-brand-mark" />
+          </div>
+        ) : (
+          <URCBrandLockup size={28} compact tone={brandTone} showParent className="sidebar-brand-lockup" />
+        )}
+        <button
+          type="button"
+          className="sidebar-toggle-btn"
+          onClick={toggleSidebarCollapsed}
+          aria-label={isSidebarCollapsed ? 'Expand side navigation' : 'Collapse side navigation'}
+          title={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+        >
+          {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
 
       <nav className="sidebar-nav">
         <div className="nav-group-header">Reporting & Benchmarking</div>
-        <NavLink to="/dashboard" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <LayoutDashboard size={18} />
-          <span>Dashboard</span>
-        </NavLink>
-        <NavLink to="/search" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Search size={18} />
-          <span>Research</span>
-        </NavLink>
-        <NavLink to="/compare" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <BarChart2 size={18} />
-          <span>Benchmarking</span>
-        </NavLink>
-        <NavLink to="/esg" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Globe size={18} />
-          <span>ESG Research</span>
-        </NavLink>
-        <NavLink to="/boards" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Users size={18} />
-          <span>Board Profiles</span>
-        </NavLink>
-        <NavLink to="/insiders" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <UserCheck size={18} />
-          <span>Insider Trading</span>
-        </NavLink>
+        <SidebarNavItem to="/dashboard" label="Dashboard" icon={<LayoutDashboard size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/search" label="Research" icon={<Search size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/compare" label="Benchmarking" icon={<BarChart2 size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/esg" label="ESG Research" icon={<Globe size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/boards" label="Board Profiles" icon={<Users size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/insiders" label="Insider Trading" icon={<UserCheck size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
 
         <div className="nav-group-header">Business Intelligence</div>
-        <NavLink to="/accounting" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <BookOpen size={18} />
-          <span>Accounting Standards</span>
-        </NavLink>
-        <NavLink to="/accounting-analytics" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <TrendingUp size={18} />
-          <span>Accounting Analytics</span>
-        </NavLink>
-        <NavLink to="/earnings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Mic size={18} />
-          <span>Earnings Releases</span>
-        </NavLink>
+        <SidebarNavItem to="/accounting" label="Accounting Standards" icon={<BookOpen size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/accounting-analytics" label="Accounting Analytics" icon={<TrendingUp size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/earnings" label="Earnings Releases" icon={<Mic size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
 
         <div className="nav-group-header">Regulation & Compliance</div>
-        <NavLink to="/regulation" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Scale size={18} />
-          <span>Securities Regulation</span>
-        </NavLink>
-        <NavLink to="/comment-letters" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Mail size={18} />
-          <span>Comment Letters</span>
-        </NavLink>
-        <NavLink to="/no-action-letters" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <ShieldCheck size={18} />
-          <span>No-Action Letters</span>
-        </NavLink>
-        <NavLink to="/enforcement" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Gavel size={18} />
-          <span>SEC Enforcement</span>
-        </NavLink>
+        <SidebarNavItem to="/regulation" label="Securities Regulation" icon={<Scale size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/comment-letters" label="Comment Letters" icon={<Mail size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/no-action-letters" label="No-Action Letters" icon={<ShieldCheck size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/enforcement" label="SEC Enforcement" icon={<Gavel size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
 
         <div className="nav-group-header">Transactions</div>
-        <NavLink to="/ipo" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Briefcase size={18} />
-          <span>IPO Center</span>
-        </NavLink>
-        <NavLink to="/mna" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Handshake size={18} />
-          <span>M&A Research</span>
-        </NavLink>
-        <NavLink to="/exhibits" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <FileSearch size={18} />
-          <span>Exhibits & Agreements</span>
-        </NavLink>
-        <NavLink to="/exempt-offerings" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <DollarSign size={18} />
-          <span>Exempt Offerings</span>
-        </NavLink>
-        <NavLink to="/adv-registrations" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <ClipboardList size={18} />
-          <span>ADV Registrations</span>
-        </NavLink>
+        <SidebarNavItem to="/ipo" label="IPO Center" icon={<Briefcase size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/mna" label="M&A Research" icon={<Handshake size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/exhibits" label="Exhibits & Agreements" icon={<FileSearch size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/exempt-offerings" label="Exempt Offerings" icon={<DollarSign size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/adv-registrations" label="ADV Registrations" icon={<ClipboardList size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
       </nav>
 
       <div className="sidebar-footer">
-        <NavLink to="/api-portal" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <Code size={18} />
-          <span>API Portal</span>
-        </NavLink>
-        <NavLink to="/support" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-          <LifeBuoy size={18} />
-          <span>Support Center</span>
-        </NavLink>
+        <SidebarNavItem to="/api-portal" label="API Portal" icon={<Code size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
+        <SidebarNavItem to="/support" label="Support Center" icon={<LifeBuoy size={18} />} isSidebarCollapsed={isSidebarCollapsed} />
       </div>
     </aside>
   );

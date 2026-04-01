@@ -76,6 +76,9 @@ interface AppContextType {
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
   toggleThemeMode: () => void;
+  isSidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebarCollapsed: () => void;
 
   currentPageContext: PageContext;
   setCurrentPageContext: (ctx: PageContext) => void;
@@ -123,6 +126,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 const WATCHLIST_STORAGE_KEY = 'vara.watchlist.v1';
 const ALERTS_STORAGE_KEY = 'vara.alerts.v1';
 const THEME_STORAGE_KEY = 'urc.theme.v1';
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'urc.sidebar-collapsed.v1';
 
 function loadStoredJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -145,6 +149,12 @@ function loadThemeMode(): ThemeMode {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function loadSidebarCollapsed(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  return window.localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true';
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [watchlist, setWatchlist] = useState<string[]>(() => loadStoredJson(WATCHLIST_STORAGE_KEY, ['AAPL', 'MSFT']));
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([{
@@ -156,6 +166,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isChatOpen, setChatOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [themeMode, setThemeMode] = useState<ThemeMode>(loadThemeMode);
+  const [isSidebarCollapsed, setSidebarCollapsed] = useState<boolean>(loadSidebarCollapsed);
   const [currentPageContext, setCurrentPageContext] = useState<PageContext>({ path: '/', label: 'Home' });
   const [currentFilingContext, setCurrentFilingContext] = useState<FilingContext | null>(null);
   const [currentFilingSections, setCurrentFilingSections] = useState<FilingSectionReference[]>([]);
@@ -190,6 +201,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       document.documentElement.style.colorScheme = themeMode;
     }
   }, [themeMode]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(isSidebarCollapsed));
+    }
+  }, [isSidebarCollapsed]);
 
   const addToWatchlist = (ticker: string) => {
     const upper = ticker.toUpperCase().trim();
@@ -295,6 +312,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setThemeMode(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed(prev => !prev);
+  };
+
   const confirmPendingAlertDraft = () => {
     if (!pendingAlertDraft) return;
 
@@ -318,6 +339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isChatOpen, setChatOpen,
       searchQuery, setSearchQuery,
       themeMode, setThemeMode, toggleThemeMode,
+      isSidebarCollapsed, setSidebarCollapsed, toggleSidebarCollapsed,
       currentPageContext, setCurrentPageContext,
       currentFilingContext, setCurrentFilingContext,
       currentFilingSections, setCurrentFilingSections,

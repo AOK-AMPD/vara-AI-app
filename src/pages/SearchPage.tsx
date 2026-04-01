@@ -3,8 +3,13 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   BellRing,
   Building2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
   ExternalLink,
   FileText,
+  Filter,
   Hash,
   Loader2,
   MessageSquare,
@@ -247,6 +252,25 @@ function buildAuditorDisplayLabel(
   return 'Auditor unavailable';
 }
 
+function countAppliedFilters(filters: SearchFilters): number {
+  return (
+    (filters.entityName ? 1 : 0) +
+    (filters.dateFrom ? 1 : 0) +
+    (filters.dateTo ? 1 : 0) +
+    filters.formTypes.length +
+    (filters.sectionKeywords ? 1 : 0) +
+    (filters.sicCode ? 1 : 0) +
+    (filters.stateOfInc ? 1 : 0) +
+    (filters.headquarters ? 1 : 0) +
+    filters.exchange.length +
+    filters.acceleratedStatus.length +
+    (filters.accountant ? 1 : 0) +
+    (filters.accessionNumber ? 1 : 0) +
+    (filters.fileNumber ? 1 : 0) +
+    (filters.fiscalYearEnd ? 1 : 0)
+  );
+}
+
 export default function SearchPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -289,6 +313,8 @@ export default function SearchPage() {
   });
   const [previewError, setPreviewError] = useState(false);
   const [previewLoadedToken, setPreviewLoadedToken] = useState(0);
+  const [isRailCollapsed, setIsRailCollapsed] = useState(false);
+  const [isQueryPanelCollapsed, setIsQueryPanelCollapsed] = useState(false);
 
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const bootstrappedInitialSearch = useRef(false);
@@ -345,6 +371,16 @@ export default function SearchPage() {
     const topForm = Object.entries(forms).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
     return { companies, topAuditor, topForm };
   }, [displayResults]);
+
+  const activeFilterCount = useMemo(() => countAppliedFilters(filters), [filters]);
+  const searchModeLabel = searchMode === 'semantic' ? 'Filing research' : 'Boolean / proximity';
+  const searchModeShortLabel = searchMode === 'semantic' ? 'FR' : 'BQ';
+  const resultCountLabel = displayResults.length >= RESEARCH_RESULT_LIMIT ? `${RESEARCH_RESULT_LIMIT}+` : displayResults.length.toString();
+
+  const collapseResearchControls = useCallback(() => {
+    setIsRailCollapsed(true);
+    setIsQueryPanelCollapsed(true);
+  }, []);
 
   const setRouteForSession = useCallback((sessionId: string | null, nextQuery: string, replace = false) => {
     setSearchParams(buildRouteParams(sessionId, nextQuery), { replace });
@@ -529,6 +565,10 @@ export default function SearchPage() {
 
       upsertSession(initialSession, { replaceUrl: options.replaceUrl });
       syncActiveSearchContext(initialSession);
+
+      if (initialMatches.length > 0) {
+        collapseResearchControls();
+      }
 
       if (initialSession.errorMsg) {
         setErrorMsg(initialSession.errorMsg);
@@ -734,6 +774,7 @@ export default function SearchPage() {
     filters,
     query,
     searchMode,
+    collapseResearchControls,
     syncActiveSearchContext,
     upsertSession,
   ]);
@@ -824,6 +865,9 @@ export default function SearchPage() {
       };
       upsertSession(session);
       syncActiveSearchContext(session);
+      if (pendingSearchIntent.prefetchedResults.length > 0) {
+        collapseResearchControls();
+      }
     } else {
       void handleSearch(
         pendingSearchIntent.query,
@@ -834,7 +878,7 @@ export default function SearchPage() {
     }
 
     setPendingSearchIntent(null);
-  }, [handleSearch, pendingSearchIntent, setPendingSearchIntent, syncActiveSearchContext, upsertSession]);
+  }, [collapseResearchControls, handleSearch, pendingSearchIntent, setPendingSearchIntent, syncActiveSearchContext, upsertSession]);
 
   useEffect(() => {
     setPreviewError(false);
@@ -893,6 +937,8 @@ export default function SearchPage() {
         setSearched(false);
         setErrorMsg('');
         setSearchInterpretation([]);
+        setIsRailCollapsed(false);
+        setIsQueryPanelCollapsed(false);
         setLastResolvedSearch({
           query: '',
           mode: 'semantic',
@@ -979,139 +1025,221 @@ export default function SearchPage() {
     : '';
 
   return (
-    <div className="research-shell">
-      <aside className="research-rail glass-card">
-        <div className="research-rail-copy">
-          <h1>Research Workbench</h1>
-          <p>
-            Run natural-language or Boolean research, keep each search in its own tab, and review matched filings in a split workspace instead of losing context.
-          </p>
-        </div>
-
-        <div className="research-rail-banner">
-          <div>
-            <div className="eyebrow">Natural-language search</div>
-            <div className="copy">{BRAND.shortName} now rewrites prompts into forms, date windows, auditors, and tighter phrase queries before hitting EDGAR.</div>
+    <div className={`research-shell ${isRailCollapsed ? 'research-shell--rail-collapsed' : ''}`}>
+      {isRailCollapsed ? (
+        <aside className="research-rail-collapsed glass-card">
+          <button
+            type="button"
+            className="research-collapse-btn research-collapse-btn--icon"
+            onClick={() => setIsRailCollapsed(false)}
+            aria-label="Expand search filters"
+            title="Show filters"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <div className="research-rail-collapsed-stack">
+            <div className="research-rail-collapsed-badge" title={`${activeFilterCount} active filters`}>
+              <Filter size={15} />
+              <span>{activeFilterCount}</span>
+            </div>
+            <div className="research-rail-collapsed-badge" title={searchModeLabel}>
+              {searchMode === 'semantic' ? <Sparkles size={15} /> : <Hash size={15} />}
+              <span>{searchModeShortLabel}</span>
+            </div>
           </div>
-          <button className="secondary-btn" onClick={() => setChatOpen(true)}>
-            <MessageSquare size={16} /> Ask {BRAND.copilotName}
+          <button type="button" className="research-rail-collapsed-link" onClick={() => setIsRailCollapsed(false)}>
+            Show filters
           </button>
-        </div>
-
-        <div className="research-mode-switch">
-          <button
-            className={`toggle-btn ${searchMode === 'semantic' ? 'active' : ''}`}
-            onClick={() => setSearchMode('semantic')}
-          >
-            <Sparkles size={16} /> Filing Research
-          </button>
-          <button
-            className={`toggle-btn ${searchMode === 'boolean' ? 'active' : ''}`}
-            onClick={() => setSearchMode('boolean')}
-          >
-            <Hash size={16} /> Boolean / Proximity
-          </button>
-        </div>
-
-        <SearchFilterBar
-          config={{
-            showEntityName: true,
-            showDateRange: true,
-            showFormTypes: true,
-            formTypeOptions: ['10-K', '10-Q', '8-K', 'DEF 14A', '20-F', '6-K', 'S-1', '8-K/A'],
-            showSectionKeywords: true,
-            showSIC: true,
-            showStateOfInc: true,
-            showHeadquarters: true,
-            showExchange: true,
-            showAcceleratedStatus: true,
-            showAccountant: true,
-            showAccessionNumber: true,
-            showFileNumber: true,
-            showFiscalYearEnd: true,
-          }}
-          filters={filters}
-          onChange={setFilters}
-          onSearch={() => void handleSearch(query)}
-          loading={loading}
-        />
-
-        <div className="research-sample-block">
-          {SAMPLE_SEARCHES.map(sample => (
+        </aside>
+      ) : (
+        <aside className="research-rail glass-card">
+          <div className="research-rail-header">
+            <div className="research-rail-copy">
+              <h1>Research Workbench</h1>
+              <p>
+                Run natural-language or Boolean research, keep each search in its own tab, and review matched filings in a split workspace instead of losing context.
+              </p>
+            </div>
             <button
-              key={sample}
-              className="sample-pill"
-              onClick={() => {
-                setQuery(sample);
-                void handleSearch(sample);
-              }}
+              type="button"
+              className="research-collapse-btn"
+              onClick={() => setIsRailCollapsed(true)}
+              aria-label="Collapse search filters"
             >
-              {sample}
+              <ChevronLeft size={16} />
+              <span>Hide</span>
             </button>
-          ))}
-        </div>
-
-        {searchMode === 'boolean' && (
-          <div className="research-guide-card">
-            <div className="guide-header">
-              <div className="guide-title">Boolean / Proximity Guide</div>
-              <button type="button" onClick={() => navigate('/support')}>Open full help</button>
-            </div>
-            <div className="guide-grid">
-              {[
-                { operator: 'AND', meaning: 'Both terms must appear', example: 'temporary AND equity' },
-                { operator: 'OR', meaning: 'Either term can appear', example: 'ASR OR repurchase' },
-                { operator: 'NOT', meaning: 'Exclude a term', example: 'equity NOT mezzanine' },
-                { operator: '"phrase"', meaning: 'Match exact wording', example: '"accelerated share repurchase"' },
-                { operator: 'w/#', meaning: 'Terms must appear within the stated word distance', example: '"car parking" w/10 installation' },
-              ].map(item => (
-                <div key={item.operator} className="guide-card">
-                  <div className="operator">{item.operator}</div>
-                  <div className="meaning">{item.meaning}</div>
-                  <code>{item.example}</code>
-                </div>
-              ))}
-            </div>
           </div>
-        )}
 
-        {alertMessage && <div className="research-alert-msg">{alertMessage}</div>}
-      </aside>
-
-      <section className="research-main">
-        <div className="research-query-panel glass-card">
-          <div className="eyebrow">Search query</div>
-          <form
-            className="research-query-form"
-            onSubmit={event => {
-              event.preventDefault();
-              void handleSearch(query);
-            }}
-          >
-            <Search className="search-icon" size={20} />
-            <input
-              type="text"
-              placeholder={
-                searchMode === 'semantic'
-                  ? 'Describe the issue you want to research...'
-                  : 'Example: "car parking" w/10 installation'
-              }
-              value={query}
-              onChange={event => setQuery(event.target.value)}
-            />
-            <button type="submit" className="primary-btn" disabled={loading}>
-              {loading ? <Loader2 size={16} className="spinner" /> : 'Search'}
+          <div className="research-rail-banner">
+            <div>
+              <div className="eyebrow">Natural-language search</div>
+              <div className="copy">{BRAND.shortName} now rewrites prompts into forms, date windows, auditors, and tighter phrase queries before hitting EDGAR.</div>
+            </div>
+            <button className="secondary-btn" onClick={() => setChatOpen(true)}>
+              <MessageSquare size={16} /> Ask {BRAND.copilotName}
             </button>
-          </form>
+          </div>
 
-          {searchInterpretation.length > 0 && (
-            <div className="research-chip-row">
-              {searchInterpretation.map(item => (
-                <span key={item} className="research-chip">{item}</span>
-              ))}
+          <div className="research-mode-switch">
+            <button
+              className={`toggle-btn ${searchMode === 'semantic' ? 'active' : ''}`}
+              onClick={() => setSearchMode('semantic')}
+            >
+              <Sparkles size={16} /> Filing Research
+            </button>
+            <button
+              className={`toggle-btn ${searchMode === 'boolean' ? 'active' : ''}`}
+              onClick={() => setSearchMode('boolean')}
+            >
+              <Hash size={16} /> Boolean / Proximity
+            </button>
+          </div>
+
+          <SearchFilterBar
+            config={{
+              showEntityName: true,
+              showDateRange: true,
+              showFormTypes: true,
+              formTypeOptions: ['10-K', '10-Q', '8-K', 'DEF 14A', '20-F', '6-K', 'S-1', '8-K/A'],
+              showSectionKeywords: true,
+              showSIC: true,
+              showStateOfInc: true,
+              showHeadquarters: true,
+              showExchange: true,
+              showAcceleratedStatus: true,
+              showAccountant: true,
+              showAccessionNumber: true,
+              showFileNumber: true,
+              showFiscalYearEnd: true,
+            }}
+            filters={filters}
+            onChange={setFilters}
+            onSearch={() => void handleSearch(query)}
+            loading={loading}
+          />
+
+          <div className="research-sample-block">
+            {SAMPLE_SEARCHES.map(sample => (
+              <button
+                key={sample}
+                className="sample-pill"
+                onClick={() => {
+                  setQuery(sample);
+                  void handleSearch(sample);
+                }}
+              >
+                {sample}
+              </button>
+            ))}
+          </div>
+
+          {searchMode === 'boolean' && (
+            <div className="research-guide-card">
+              <div className="guide-header">
+                <div className="guide-title">Boolean / Proximity Guide</div>
+                <button type="button" onClick={() => navigate('/support')}>Open full help</button>
+              </div>
+              <div className="guide-grid">
+                {[
+                  { operator: 'AND', meaning: 'Both terms must appear', example: 'temporary AND equity' },
+                  { operator: 'OR', meaning: 'Either term can appear', example: 'ASR OR repurchase' },
+                  { operator: 'NOT', meaning: 'Exclude a term', example: 'equity NOT mezzanine' },
+                  { operator: '"phrase"', meaning: 'Match exact wording', example: '"accelerated share repurchase"' },
+                  { operator: 'w/#', meaning: 'Terms must appear within the stated word distance', example: '"car parking" w/10 installation' },
+                ].map(item => (
+                  <div key={item.operator} className="guide-card">
+                    <div className="operator">{item.operator}</div>
+                    <div className="meaning">{item.meaning}</div>
+                    <code>{item.example}</code>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-        </div>
+
+          {alertMessage && <div className="research-alert-msg">{alertMessage}</div>}
+        </aside>
+      )}
+
+      <section className="research-main">
+        {isQueryPanelCollapsed ? (
+          <div className="research-query-collapsed glass-card">
+            <div className="research-query-collapsed-copy">
+              <div className="eyebrow">Current search</div>
+              <div className="research-query-collapsed-main">
+                <Search size={16} />
+                <span className="research-query-collapsed-text">{query.trim() || 'Ready for a new filing search'}</span>
+              </div>
+              <div className="research-query-collapsed-meta">
+                <span className="research-query-summary-chip">{searchModeLabel}</span>
+                <span className="research-query-summary-chip">
+                  {activeFilterCount} filter{activeFilterCount === 1 ? '' : 's'}
+                </span>
+                {displayResults.length > 0 && (
+                  <span className="research-query-summary-chip">
+                    {resultCountLabel} result{displayResults.length === 1 ? '' : 's'}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="research-query-collapsed-actions">
+              {isRailCollapsed && (
+                <button type="button" className="secondary-btn" onClick={() => setIsRailCollapsed(false)}>
+                  <Filter size={14} /> Filters
+                </button>
+              )}
+              <button type="button" className="secondary-btn" onClick={() => setIsQueryPanelCollapsed(false)}>
+                <ChevronDown size={14} /> Edit Search
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="research-query-panel glass-card">
+            <div className="research-query-panel-header">
+              <div className="eyebrow">Search query</div>
+              <button
+                type="button"
+                className="research-collapse-btn"
+                onClick={() => setIsQueryPanelCollapsed(true)}
+                aria-label="Collapse search bar"
+              >
+                <ChevronUp size={16} />
+                <span>Hide</span>
+              </button>
+            </div>
+            <form
+              className="research-query-form"
+              onSubmit={event => {
+                event.preventDefault();
+                void handleSearch(query);
+              }}
+            >
+              <Search className="search-icon" size={20} />
+              <input
+                type="text"
+                placeholder={
+                  searchMode === 'semantic'
+                    ? 'Describe the issue you want to research...'
+                    : 'Example: "car parking" w/10 installation'
+                }
+                value={query}
+                onChange={event => setQuery(event.target.value)}
+              />
+              <button type="submit" className="primary-btn" disabled={loading}>
+                {loading ? <Loader2 size={16} className="spinner" /> : 'Search'}
+              </button>
+            </form>
+
+            {searchInterpretation.length > 0 && (
+              <div className="research-chip-row">
+                {searchInterpretation.map(item => (
+                  <span key={item} className="research-chip">{item}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="research-toolbar glass-card">
           <div className="research-tab-strip">
