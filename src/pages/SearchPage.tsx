@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   BellRing,
-  Building2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -315,6 +314,7 @@ export default function SearchPage() {
   const [previewLoadedToken, setPreviewLoadedToken] = useState(0);
   const [isRailCollapsed, setIsRailCollapsed] = useState(false);
   const [isQueryPanelCollapsed, setIsQueryPanelCollapsed] = useState(false);
+  const [isInsightsExpanded, setIsInsightsExpanded] = useState(false);
 
   const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const bootstrappedInitialSearch = useRef(false);
@@ -376,10 +376,28 @@ export default function SearchPage() {
   const searchModeLabel = searchMode === 'semantic' ? 'Filing research' : 'Boolean / proximity';
   const searchModeShortLabel = searchMode === 'semantic' ? 'FR' : 'BQ';
   const resultCountLabel = displayResults.length >= RESEARCH_RESULT_LIMIT ? `${RESEARCH_RESULT_LIMIT}+` : displayResults.length.toString();
+  const isResearchFocusMode = isRailCollapsed && displayResults.length > 0;
+  const lastUpdatedLabel = useMemo(() => {
+    if (!activeSession?.updatedAt) {
+      return '';
+    }
+
+    try {
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(new Date(activeSession.updatedAt));
+    } catch {
+      return '';
+    }
+  }, [activeSession?.updatedAt]);
 
   const collapseResearchControls = useCallback(() => {
     setIsRailCollapsed(true);
     setIsQueryPanelCollapsed(true);
+    setIsInsightsExpanded(false);
   }, []);
 
   const setRouteForSession = useCallback((sessionId: string | null, nextQuery: string, replace = false) => {
@@ -474,6 +492,7 @@ export default function SearchPage() {
     setErrorMsg('');
     setAlertMessage('');
     setTrendReport('');
+    setIsInsightsExpanded(false);
     setSearchInterpretation(interpreted.appliedHints);
 
     const draftSignature = buildSearchSignature(trimmed, effectiveMode, nextFilters);
@@ -802,6 +821,7 @@ export default function SearchPage() {
       filters: cloneSearchFilters(activeSession.resolvedSearch.filters),
     });
     setTrendReport('');
+    setIsInsightsExpanded(false);
     setAlertMessage('');
     syncActiveSearchContext(activeSession);
   }, [activeSession, syncActiveSearchContext]);
@@ -939,6 +959,7 @@ export default function SearchPage() {
         setSearchInterpretation([]);
         setIsRailCollapsed(false);
         setIsQueryPanelCollapsed(false);
+        setIsInsightsExpanded(false);
         setLastResolvedSearch({
           query: '',
           mode: 'semantic',
@@ -975,6 +996,7 @@ export default function SearchPage() {
     if (displayResults.length === 0) return;
 
     setTrendLoading(true);
+    setIsInsightsExpanded(false);
     try {
       const statsSummary = await buildSearchTrendSummary(displayResults.slice(0, 20), query, filters);
       const aiResponse = await aiSummarize(
@@ -1025,7 +1047,9 @@ export default function SearchPage() {
     : '';
 
   return (
-    <div className={`research-shell ${isRailCollapsed ? 'research-shell--rail-collapsed' : ''}`}>
+    <div
+      className={`research-shell ${isRailCollapsed ? 'research-shell--rail-collapsed' : ''} ${isResearchFocusMode ? 'research-shell--focus' : ''}`}
+    >
       {isRailCollapsed ? (
         <aside className="research-rail-collapsed glass-card">
           <button
@@ -1047,9 +1071,6 @@ export default function SearchPage() {
               <span>{searchModeShortLabel}</span>
             </div>
           </div>
-          <button type="button" className="research-rail-collapsed-link" onClick={() => setIsRailCollapsed(false)}>
-            Show filters
-          </button>
         </aside>
       ) : (
         <aside className="research-rail glass-card">
@@ -1272,34 +1293,70 @@ export default function SearchPage() {
             <button className="secondary-btn" onClick={handleCreateAlert} disabled={!query.trim() && !filters.entityName.trim()}>
               <BellRing size={16} /> Save Alert
             </button>
-            <button className="primary-btn" onClick={handleTrendReport} disabled={displayResults.length === 0 || trendLoading}>
-              {trendLoading ? <Loader2 size={16} className="spinner" /> : <Sparkles size={16} />} Trend Report
-            </button>
           </div>
         </div>
 
         {displayResults.length > 0 && (
-          <div className="research-metric-grid">
-            {[
-              { label: 'Matched Filings', value: displayResults.length >= RESEARCH_RESULT_LIMIT ? `${RESEARCH_RESULT_LIMIT}+` : displayResults.length.toString(), icon: <FileText size={18} /> },
-              { label: 'Issuers', value: metrics.companies.toString(), icon: <Building2 size={18} /> },
-              { label: 'Top Form', value: metrics.topForm, icon: <Hash size={18} /> },
-              { label: 'Top Auditor', value: metrics.topAuditor, icon: <BellRing size={18} /> },
-            ].map(card => (
-              <div key={card.label} className="glass-card research-metric-card">
-                <div className="label">{card.icon}{card.label}</div>
-                <div className="value">{card.value}</div>
+          <div className="research-context-stack">
+            <div className="research-context-bar glass-card">
+              <div className="research-context-copy">
+                <div className="eyebrow">Search context</div>
+                <div className="research-context-chip-row">
+                  <span className="research-context-chip research-context-chip--accent">
+                    <strong>{resultCountLabel}</strong>
+                    <span>filing{displayResults.length === 1 ? '' : 's'}</span>
+                  </span>
+                  <span className="research-context-chip">
+                    <span className="label">Issuers</span>
+                    <strong>{metrics.companies}</strong>
+                  </span>
+                  <span className="research-context-chip">
+                    <span className="label">Top form</span>
+                    <strong>{metrics.topForm}</strong>
+                  </span>
+                  <span className="research-context-chip">
+                    <span className="label">Top auditor</span>
+                    <strong>{metrics.topAuditor}</strong>
+                  </span>
+                  {lastUpdatedLabel && (
+                    <span className="research-context-chip">
+                      <span className="label">Updated</span>
+                      <strong>{lastUpdatedLabel}</strong>
+                    </span>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {trendReport && (
-          <div className="glass-card research-trend-card">
-            <div className="trend-title"><Sparkles size={18} /> Trend Report</div>
-            <div className="md-content" style={{ color: 'var(--text-secondary)' }}>
-              {trendReport.split('\n').map((line, index) => <p key={index}>{line}</p>)}
+              <div className="research-context-actions">
+                <button
+                  type="button"
+                  className="secondary-btn"
+                  onClick={handleTrendReport}
+                  disabled={displayResults.length === 0 || trendLoading}
+                >
+                  {trendLoading ? <Loader2 size={16} className="spinner" /> : <Sparkles size={16} />}
+                  {trendReport ? 'Refresh Insight' : 'Generate Insight'}
+                </button>
+                {trendReport && (
+                  <button
+                    type="button"
+                    className="secondary-btn"
+                    onClick={() => setIsInsightsExpanded(current => !current)}
+                  >
+                    {isInsightsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    {isInsightsExpanded ? 'Hide Insight' : 'Show Insight'}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {trendReport && isInsightsExpanded && (
+              <div className="glass-card research-insight-panel">
+                <div className="trend-title"><Sparkles size={18} /> Trend report</div>
+                <div className="md-content research-insight-copy">
+                  {trendReport.split('\n').map((line, index) => <p key={index}>{line}</p>)}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

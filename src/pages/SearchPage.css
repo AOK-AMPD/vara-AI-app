@@ -419,7 +419,11 @@
 }
 
 .research-shell--rail-collapsed {
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.research-shell--rail-collapsed.research-shell--focus {
+  grid-template-columns: 58px minmax(0, 1fr);
 }
 
 .research-rail {
@@ -480,15 +484,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 14px 10px;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 14px 8px;
 }
 
 .research-rail-collapsed-stack {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .research-rail-collapsed-badge {
@@ -496,15 +501,25 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  min-height: 66px;
-  padding: 10px 6px;
-  border-radius: 16px;
+  gap: 4px;
+  min-height: 54px;
+  padding: 8px 4px;
+  border-radius: 14px;
   border: 1px solid rgba(179, 31, 126, 0.16);
   background: linear-gradient(135deg, var(--surface-subtle), var(--surface-panel));
   color: var(--accent-primary);
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 700;
+}
+
+.research-shell--focus .research-rail-collapsed {
+  padding: 12px 6px;
+}
+
+.research-shell--focus .research-rail-collapsed-badge {
+  min-height: 46px;
+  padding: 7px 2px;
+  border-radius: 12px;
 }
 
 .research-rail-collapsed-link {
@@ -751,7 +766,7 @@
 .research-main {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
   min-height: 0;
   overflow-y: auto;
@@ -823,32 +838,83 @@
   flex: 0 0 auto;
 }
 
-.research-metric-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+.research-context-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.research-context-bar {
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.research-metric-card {
-  padding: 16px;
+.research-context-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.research-metric-card .label {
+.research-context-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.research-context-chip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #D66CAE;
-  margin-bottom: 8px;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
-.research-metric-card .value {
-  color: white;
-  font-size: 1.08rem;
+.research-context-chip .label {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.research-context-chip strong {
+  color: var(--text-primary);
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
-.research-trend-card {
-  padding: 18px 20px;
+.research-context-chip--accent {
+  border-color: rgba(179, 31, 126, 0.22);
+  background: rgba(179, 31, 126, 0.1);
+  color: var(--accent-primary);
+}
+
+.research-context-chip--accent strong {
+  color: var(--accent-primary);
+}
+
+.research-context-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.research-insight-panel {
+  padding: 14px 16px;
 }
 
 .trend-title {
@@ -860,11 +926,21 @@
   font-weight: 600;
 }
 
+.research-insight-copy {
+  color: var(--text-secondary);
+}
+
+.research-insight-copy p + p {
+  margin-top: 10px;
+}
+
 .research-workspace {
   display: grid;
   grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
   gap: 16px;
-  min-height: 60vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .research-hit-list,
@@ -873,6 +949,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .research-hit-list h2,
@@ -1033,7 +1110,11 @@
   }
 
   .research-shell--rail-collapsed {
-    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .research-shell--rail-collapsed.research-shell--focus {
+    grid-template-columns: 54px minmax(0, 1fr);
   }
 
   .research-workspace {
@@ -1048,7 +1129,11 @@
   }
 
   .research-shell--rail-collapsed {
-    grid-template-columns: 76px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .research-shell--rail-collapsed.research-shell--focus {
+    grid-template-columns: 52px minmax(0, 1fr);
   }
 
   .research-rail {
@@ -1062,7 +1147,7 @@
   }
 
   .research-rail-collapsed-badge {
-    min-height: 58px;
+    min-height: 50px;
     font-size: 0.68rem;
   }
 
@@ -1191,27 +1276,25 @@
     gap: 6px;
   }
 
-  .research-metric-grid {
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px;
+  .research-context-bar {
+    padding: 10px 12px;
   }
 
-  .research-metric-card {
-    padding: 12px;
+  .research-context-chip {
+    padding: 5px 9px;
+    font-size: 0.72rem;
   }
 
-  .research-metric-card .label {
-    gap: 6px;
-    margin-bottom: 6px;
-    font-size: 0.8rem;
+  .research-context-chip .label {
+    font-size: 0.64rem;
   }
 
-  .research-metric-card .value {
-    font-size: 0.98rem;
+  .research-context-chip strong {
+    font-size: 0.78rem;
   }
 
-  .research-trend-card {
-    padding: 14px 16px;
+  .research-insight-panel {
+    padding: 12px 14px;
   }
 
   .trend-title {
@@ -1319,7 +1402,11 @@
   }
 
   .research-shell--rail-collapsed {
-    grid-template-columns: 68px minmax(0, 1fr);
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .research-shell--rail-collapsed.research-shell--focus {
+    grid-template-columns: 48px minmax(0, 1fr);
   }
 
   .research-rail {
@@ -1337,7 +1424,8 @@
 
   .research-query-panel,
   .research-toolbar,
-  .research-trend-card,
+  .research-context-bar,
+  .research-insight-panel,
   .research-hit-list,
   .research-preview {
     border-radius: 16px;
@@ -1403,6 +1491,14 @@
   .research-toolbar-actions {
     flex-wrap: wrap;
   }
+
+  .research-main {
+    overflow: visible;
+  }
+
+  .research-workspace {
+    overflow: visible;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1431,6 +1527,15 @@
   .research-workspace {
     min-height: 52vh;
   }
+
+  .research-context-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .research-context-actions {
+    justify-content: flex-start;
+  }
 }
 
 .research-shell {
@@ -1442,6 +1547,8 @@
 .research-query-panel,
 .research-query-collapsed,
 .research-toolbar,
+.research-context-bar,
+.research-insight-panel,
 .research-metric-card,
 .research-trend-card,
 .research-hit-list,
