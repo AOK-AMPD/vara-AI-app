@@ -1,16 +1,4 @@
 {
   "framework": "nextjs",
-  "routes": [
-    { "src": "^/sec-proxy/?$", "dest": "/api/sec-proxy" },
-    { "src": "^/sec-proxy/(.*)$", "dest": "/api/sec-proxy?path=$1" },
-    { "src": "^/sec-data/?$", "dest": "/api/sec-proxy?upstream=data" },
-    { "src": "^/sec-data/(.*)$", "dest": "/api/sec-proxy?upstream=data&path=$1" },
-    { "src": "^/sec-efts/?$", "dest": "/api/sec-proxy?upstream=efts" },
-    { "src": "^/sec-efts/(.*)$", "dest": "/api/sec-proxy?upstream=efts&path=$1" },
-    { "src": "^/api/es-search", "dest": "/api/es-search" },
-    { "src": "^/(ix|ixviewer|Archives|include|files|cdata|js|css|images)/(.*)$", "dest": "/api/sec-proxy?path=$1/$2" },
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/" }
-  ],
   "crons": [{ "path": "/api/cron/precompute", "schedule": "0 9 * * *" }]
 }
