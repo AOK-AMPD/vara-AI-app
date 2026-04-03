@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.next/
 .vercel/
 .vite/
 audit-output/
@@ -12,3 +13,6 @@ Thumbs.db
 
 .vscode/
 .claude/
+
+# clerk configuration (can include secrets)
+/.clerk/

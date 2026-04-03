@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useRouter, usePathname } from 'next/navigation';
+
 import {
   AlertTriangle,
   BellRing,
@@ -37,9 +40,10 @@ import {
   resolveCompanyHint,
 } from '../services/agentEvidence';
 import { buildSearchTrendSummary, executeFilingResearchSearch, type FilingResearchResult, type ResearchSearchMode } from '../services/filingResearch';
-import { generateAgentAnswer, generateFilingSummary, planAgentRun } from '../services/aiApi';
+import { generateAgentAnswer, generateAgentAnswerStreaming, generateFilingSummary, planAgentRun, summarizeConversation } from '../services/aiApi';
 import { openCleanPrintView } from '../services/filingExport';
 import { BRAND } from '../config/brand';
+import { SAMPLE_PROMPTS, SAMPLE_PROMPT_CATEGORIES } from '../data/samplePrompts';
 import './AIQnA.css';
 
 type SurfaceRoute = 'search' | 'accounting' | 'comment-letters';
@@ -107,7 +111,44 @@ function normalizeSearchFilters(input: unknown): SearchFilters {
   };
 }
 
-function buildContextSnapshot(app: ReturnType<typeof useApp>, pathname: string): AgentContextSnapshot {
+// Cache for conversation summaries to avoid re-summarizing
+const conversationSummaryCache = new Map<string, string>();
+
+async function buildContextSnapshotAsync(app: ReturnType<typeof useApp>, pathname: string): Promise<AgentContextSnapshot> {
+  const completedRuns = app.agentRuns
+    .filter(run => run.prompt.trim().length > 0 && run.answer.trim().length > 0);
+
+  let conversation: Array<{ prompt: string; answer: string; startedAt: string }>;
+
+  if (completedRuns.length > 8) {
+    // Summarize older turns, keep last 3 verbatim (Plan Section 6.1)
+    const olderTurns = completedRuns.slice(3).reverse();
+    const recentTurns = completedRuns.slice(0, 3).reverse();
+
+    const cacheKey = olderTurns.map(r => r.id).join(':');
+    let summary = conversationSummaryCache.get(cacheKey);
+    if (!summary) {
+      try {
+        summary = await summarizeConversation(
+          olderTurns.map(r => ({ prompt: r.prompt, answer: r.answer }))
+        );
+        conversationSummaryCache.set(cacheKey, summary);
+      } catch {
+        summary = '';
+      }
+    }
+
+    conversation = [
+      ...(summary ? [{ prompt: '[Conversation summary]', answer: summary, startedAt: olderTurns[0]?.startedAt || '' }] : []),
+      ...recentTurns.map(run => ({ prompt: run.prompt, answer: run.answer, startedAt: run.startedAt })),
+    ];
+  } else {
+    conversation = completedRuns
+      .slice(0, 6)
+      .reverse()
+      .map(run => ({ prompt: run.prompt, answer: run.answer, startedAt: run.startedAt }));
+  }
+
   return {
     pagePath: app.currentPageContext.path || pathname,
     pageLabel: app.currentPageContext.label || 'Workspace',
@@ -135,15 +176,46 @@ function buildContextSnapshot(app: ReturnType<typeof useApp>, pathname: string):
           selectedSection: app.activeCompareContext.selectedSection,
         }
       : null,
-    conversation: app.agentRuns
+    conversation,
+  };
+}
+
+// Synchronous version for non-async contexts
+function buildContextSnapshot(app: ReturnType<typeof useApp>, pathname: string): AgentContextSnapshot {
+  const completedRuns = app.agentRuns
+    .filter(run => run.prompt.trim().length > 0);
+
+  return {
+    pagePath: app.currentPageContext.path || pathname,
+    pageLabel: app.currentPageContext.label || 'Workspace',
+    filing: app.currentFilingContext
+      ? {
+          ...app.currentFilingContext,
+          sections: app.currentFilingSections,
+        }
+      : null,
+    search: app.activeSearchContext
+      ? {
+          surface: app.activeSearchContext.surface,
+          query: app.activeSearchContext.query,
+          mode: app.activeSearchContext.mode,
+          filters: app.activeSearchContext.filters,
+          resultCount: app.activeSearchContext.results.length,
+          topResults: app.activeSearchContext.results.slice(0, 8),
+        }
+      : null,
+    compare: app.activeCompareContext
+      ? {
+          tickers: app.activeCompareContext.tickers,
+          sicCode: app.activeCompareContext.sicCode,
+          viewMode: app.activeCompareContext.viewMode,
+          selectedSection: app.activeCompareContext.selectedSection,
+        }
+      : null,
+    conversation: completedRuns
       .slice(0, 6)
       .reverse()
-      .filter(run => run.prompt.trim().length > 0)
-      .map(run => ({
-        prompt: run.prompt,
-        answer: run.answer,
-        startedAt: run.startedAt,
-      })),
+      .map(run => ({ prompt: run.prompt, answer: run.answer, startedAt: run.startedAt })),
   };
 }
 
@@ -211,11 +283,13 @@ export function AIQnAPanel() {
     setPendingAlertDraft,
     confirmPendingAlertDraft,
   } = app;
-  const location = useLocation();
-  const navigate = useNavigate();
+  const location = usePathname();
+  const navigate = useRouter();
   const [inputValue, setInputValue] = useState('');
   const [tab, setTab] = useState<PanelTab>('answer');
   const [running, setRunning] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [loadingStage, setLoadingStage] = useState('');
   const panelBodyRef = useRef<HTMLDivElement>(null);
 
   const activeRun = useMemo(
@@ -238,6 +312,8 @@ export function AIQnAPanel() {
   async function executePrompt(prompt: string) {
     const runId = startAgentRun(prompt);
     setRunning(true);
+    setStreamingText('');
+    setLoadingStage('Analyzing your question...');
     setTab('actions');
     appendAgentLog(runId, {
       type: 'system',
@@ -247,7 +323,8 @@ export function AIQnAPanel() {
     });
 
     try {
-      const context = buildContextSnapshot(app, location.pathname);
+      const context = await buildContextSnapshotAsync(app, location.pathname);
+      setLoadingStage('Planning actions...');
       const plan = await planAgentRun(prompt, context);
       updateAgentRun(runId, { plan });
       appendAgentLog(runId, {
@@ -258,6 +335,7 @@ export function AIQnAPanel() {
       });
 
       const runtime = createInitialRuntimeState();
+      setLoadingStage('Searching 500K+ SEC filings...');
 
       for (const action of plan.actions) {
         try {
@@ -613,10 +691,21 @@ export function AIQnAPanel() {
         },
       };
 
-      const finalAnswer =
-        runtime.importantSummary && runtime.searchResults.length === 0 && runtime.commentLetterResults.length === 0
-          ? runtime.importantSummary
-          : await generateAgentAnswer(evidencePacket, buildContextSnapshot(app, location.pathname));
+      let finalAnswer: string;
+
+      if (runtime.importantSummary && runtime.searchResults.length === 0 && runtime.commentLetterResults.length === 0) {
+        finalAnswer = runtime.importantSummary;
+      } else {
+        // Use streaming for answer generation — tokens appear incrementally
+        setLoadingStage('Generating analysis...');
+        setTab('answer');
+        const streamContext = await buildContextSnapshotAsync(app, location.pathname);
+        finalAnswer = await generateAgentAnswerStreaming(
+          evidencePacket,
+          streamContext,
+          (chunk) => setStreamingText(prev => prev + chunk)
+        );
+      }
 
       updateAgentRun(runId, {
         status: 'completed',
@@ -624,6 +713,7 @@ export function AIQnAPanel() {
         answer: finalAnswer,
         evidence: evidencePacket,
       });
+      setStreamingText('');
       setTab('answer');
     } catch (error) {
       console.error('Copilot run failed:', error);
@@ -641,6 +731,7 @@ export function AIQnAPanel() {
       setTab('actions');
     } finally {
       setRunning(false);
+      setLoadingStage('');
     }
   }
 
@@ -753,10 +844,12 @@ export function AIQnAPanel() {
               <div className="panel-tab-content">
                 {activeRun.answer ? (
                   <div className="copilot-answer md-content" dangerouslySetInnerHTML={{ __html: renderMarkdown(activeRun.answer) }} />
+                ) : streamingText ? (
+                  <div className="copilot-answer md-content streaming" dangerouslySetInnerHTML={{ __html: renderMarkdown(streamingText) }} />
                 ) : activeRun.status === 'running' ? (
                   <div className="loading-state">
                     <Loader2 size={16} className="spinner" />
-                    <span>Running actions and assembling evidence...</span>
+                    <span>{loadingStage || 'Running actions and assembling evidence...'}</span>
                   </div>
                 ) : (
                   <div className="empty-state-small">This run has no answer yet.</div>
@@ -832,6 +925,26 @@ export function AIQnAPanel() {
 
                 {activeRun.plan && (
                   <>
+                    <div className="section-label">Search Logic</div>
+                    <div className="search-logic-card">
+                      <div className="search-logic-row">
+                        <span className="search-logic-label">Goal:</span>
+                        <span>{activeRun.plan.goal}</span>
+                      </div>
+                      {activeRun.plan.confidence && (
+                        <div className="search-logic-row">
+                          <span className="search-logic-label">Confidence:</span>
+                          <span className={`confidence-badge ${activeRun.plan.confidence}`}>{activeRun.plan.confidence}</span>
+                        </div>
+                      )}
+                      {activeRun.plan.rationale && (
+                        <div className="search-logic-row">
+                          <span className="search-logic-label">Rationale:</span>
+                          <span>{activeRun.plan.rationale}</span>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="section-label">Planned Actions</div>
                     <div className="planned-actions">
                       {activeRun.plan.actions.map(action => (
@@ -848,14 +961,18 @@ export function AIQnAPanel() {
           </div>
         ) : (
           <div className="empty-copilot-state">
-            <div className="section-label">Try one of these</div>
-            <div className="suggestion-list">
-              {suggestions.map(suggestion => (
-                <button key={suggestion} className="suggestion-pill" onClick={() => setInputValue(suggestion)}>
-                  {suggestion}
-                </button>
-              ))}
-            </div>
+            {SAMPLE_PROMPT_CATEGORIES.map(category => (
+              <div key={category} className="sample-category">
+                <div className="section-label">{category}</div>
+                <div className="suggestion-list">
+                  {SAMPLE_PROMPTS.filter(p => p.category === category).slice(0, 3).map(sp => (
+                    <button key={sp.label} className="suggestion-pill" onClick={() => setInputValue(sp.prompt)} title={sp.prompt}>
+                      {sp.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

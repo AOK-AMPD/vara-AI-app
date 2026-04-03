@@ -11,7 +11,7 @@ export interface Company {
 export interface Filing {
   id: string;
   companyId: string;
-  type: '10-K' | '10-Q' | '8-K' | 'S-1' | 'DEF 14A';
+  type: '10-K' | '10-Q' | '8-K' | 'S-1' | 'DEF 14A' | 'UPLOAD' | 'CORRESP' | string;
   date: string;
   summary: string;
   url?: string;

@@ -3,7 +3,7 @@ import { canonicalizeAuditorInput, findAuditorMention } from './auditors';
 import type { AgentAction, AgentContextSnapshot, AgentPlan, AgentToolName } from '../types/agent';
 import type { ResearchSearchMode } from './filingResearch';
 
-const FORM_TYPES = ['10-K', '10-Q', '8-K', 'DEF 14A', '20-F', '6-K', 'S-1'] as const;
+const FORM_TYPES = ['10-K', '10-Q', '8-K', 'DEF 14A', '20-F', '6-K', 'S-1', 'UPLOAD', 'CORRESP'] as const;
 const LATEST_FILING_PATTERN = '(?:latest|most\\s+recent|newest|current)';
 
 function makeAction(type: AgentToolName, title: string, input: Record<string, unknown>, reason?: string): AgentAction {
@@ -393,6 +393,20 @@ export function buildHeuristicAgentPlan(prompt: string, context: AgentContextSna
     actions,
     followUps,
   };
+}
+
+/**
+ * Determines if a heuristic plan is ambiguous enough to warrant Claude-powered intent resolution.
+ * Returns true when the heuristic planner has low confidence or too many actions at medium confidence.
+ */
+export function isAmbiguousIntent(plan: AgentPlan): boolean {
+  if (plan.confidence === 'low') return true;
+  if (plan.confidence === 'medium' && plan.actions.length > 4) return true;
+  // If the plan only has generic search actions and no specific entities, it's ambiguous
+  if (plan.actions.length === 1 && plan.actions[0].type === 'search_filings' && !plan.actions[0].input.companyHint) {
+    return true;
+  }
+  return false;
 }
 
 function isAllowedActionType(value: string): value is AgentToolName {

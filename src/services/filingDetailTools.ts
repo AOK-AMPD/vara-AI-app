@@ -6,6 +6,7 @@ export interface DisclosureDiffSummary {
   removedCount: number;
   addedBlocks: string[];
   removedBlocks: string[];
+  changedBlocks: Array<{ previous: string; current: string }>;
 }
 
 export interface ExtractedTable {
@@ -97,14 +98,56 @@ export function buildDisclosureDiff(currentText: string, previousText: string): 
 
   const retainedCount = currentBlocks.filter(block => previousMap.has(normalizeBlock(block))).length;
 
+  let finalAdded = [...addedBlocks];
+  let finalRemoved = [...removedBlocks];
+  const changedBlocks: Array<{ previous: string; current: string }> = [];
+
+  // Find fuzzy block matches to identify "modified" blocks rather than just added/removed
+  const usedAdded = new Set<number>();
+  
+  for (let i = 0; i < finalRemoved.length; i++) {
+    const remTokens = new Set(normalizeBlock(finalRemoved[i]).split(' '));
+    let bestMatchIdx = -1;
+    let bestScore = 0.4; // Require at least 40% similarity
+
+    for (let j = 0; j < finalAdded.length; j++) {
+      if (usedAdded.has(j)) continue;
+      const addTokens = new Set(normalizeBlock(finalAdded[j]).split(' '));
+      
+      const intersection = [...remTokens].filter(x => addTokens.has(x)).length;
+      const union = remTokens.size + addTokens.size - intersection;
+      const score = union === 0 ? 0 : intersection / union;
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatchIdx = j;
+      }
+    }
+
+    if (bestMatchIdx !== -1) {
+      changedBlocks.push({
+        previous: finalRemoved[i],
+        current: finalAdded[bestMatchIdx],
+      });
+      usedAdded.add(bestMatchIdx);
+    }
+  }
+
+  // Filter out the blocks that were paired up as changed
+  const remainingAdded = finalAdded.filter((_, idx) => !usedAdded.has(idx));
+  const remainingRemoved = finalRemoved.filter((_, idx) => {
+    return !changedBlocks.some(c => c.previous === finalRemoved[idx]);
+  });
+
   return {
     currentBlockCount: currentBlocks.length,
     previousBlockCount: previousBlocks.length,
     retainedCount,
     addedCount: Math.max(currentBlocks.length - retainedCount, 0),
     removedCount: Math.max(previousBlocks.length - retainedCount, 0),
-    addedBlocks,
-    removedBlocks,
+    addedBlocks: remainingAdded,
+    removedBlocks: remainingRemoved,
+    changedBlocks,
   };
 }
 

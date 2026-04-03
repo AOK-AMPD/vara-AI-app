@@ -1,3 +1,5 @@
+'use client';
+
 import { BRAND } from '../../config/brand';
 import uniqLogoColor from '../../assets/brand/uniqus-logo-color.png';
 import uniqLogoMark from '../../assets/brand/uniqus-logo-white.png';
@@ -17,13 +19,13 @@ interface BrandLockupProps extends BrandMarkProps {
 }
 
 function resolveLogoSource(tone: Tone) {
-  return tone === 'light' ? uniqLogoMark : uniqLogoColor;
+  return tone === 'light' ? uniqLogoMark.src : uniqLogoColor.src;
 }
 
 export function URCBrandMark({ size = 24, className }: BrandMarkProps) {
   return (
     <img
-      src={uniqLogoMark}
+      src={uniqLogoMark.src}
       alt={BRAND.parentName}
       className={className}
       style={{

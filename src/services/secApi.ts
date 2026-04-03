@@ -1,8 +1,8 @@
 // Utility for fetching real SEC EDGAR data
 // SEC EDGAR requires a descriptive User-Agent string
 
-const USER_AGENT = import.meta.env.VITE_EDGAR_USER_AGENT || 'Uniqus Research Center contact@uniqus.com';
-const USE_DIRECT_VERCEL_API = !import.meta.env.DEV;
+const USER_AGENT = process.env.NEXT_PUBLIC_EDGAR_USER_AGENT || 'Uniqus Research Center contact@uniqus.com';
+const USE_DIRECT_VERCEL_API = process.env.NODE_ENV === 'production';
 const edgarSearchCache = new Map<string, Promise<EdgarSearchHit[]>>();
 
 function isEnabledEnvFlag(value: unknown): boolean {
@@ -21,7 +21,7 @@ function isEnabledEnvFlag(value: unknown): boolean {
 }
 
 export function isElasticsearchEnabled(): boolean {
-  return isEnabledEnvFlag(import.meta.env.VITE_USE_ELASTICSEARCH);
+  return isEnabledEnvFlag(process.env.NEXT_PUBLIC_USE_ELASTICSEARCH);
 }
 
 // Cache for CIKs to avoid redundant lookups if doing bulk mappings 
@@ -58,23 +58,16 @@ function buildProxyUrl(
     }
   }
 
-  if (!USE_DIRECT_VERCEL_API) {
-    if (type === 'efts') {
-      searchParams.set('path', cleanPath);
-      return `/api/sec-efts?${searchParams.toString()}`;
-    }
-
-    const base =
-      type === 'data'
-        ? `/sec-data/${cleanPath}`
-        : `/sec-proxy/${cleanPath}`;
-    const query = searchParams.toString();
-    return query ? `${base}?${query}` : base;
+  if (type === 'efts') {
+    searchParams.set('path', cleanPath);
+    return `/api/sec-efts?${searchParams.toString()}`;
   }
 
   const functionName = 'sec-proxy';
-  if (type === 'data' || type === 'efts') {
-    searchParams.set('upstream', type);
+  if (type === 'data') {
+    searchParams.set('upstream', 'data');
+  } else {
+    searchParams.set('upstream', 'proxy');
   }
   searchParams.set('path', cleanPath);
   return `/api/${functionName}?${searchParams.toString()}`;
@@ -96,15 +89,28 @@ export function buildSecEftsUrl(path: string, params?: Record<string, string | n
   return buildProxyUrl('efts', path, params);
 }
 
-function extractDocumentTextFromHtml(html: string): string {
+export function extractDocumentTextFromHtml(html: string): string {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const body = doc.body;
   if (!body) return '';
 
   const clone = body.cloneNode(true) as HTMLElement;
+  
+  // Remove invisible and structural nodes
   clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
   clone.querySelectorAll('ix\\:header, ix\\:hidden, xbrli\\:context, xbrli\\:unit').forEach(node => node.remove());
+
+  // Unwrap inline XBRL elements so innerText treats the text continuously
+  clone.querySelectorAll('ix\\:nonnumeric, ix\\:nonfraction, ix\\:continuation').forEach(node => {
+    const parent = node.parentNode;
+    if (parent) {
+      while (node.firstChild) {
+        parent.insertBefore(node.firstChild, node);
+      }
+      parent.removeChild(node);
+    }
+  });
 
   const text = clone.innerText || clone.textContent || '';
   return text

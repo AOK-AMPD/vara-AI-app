@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ChatMessage } from '../types';
 import type { SearchFilters } from '../components/filters/SearchFilterBar';

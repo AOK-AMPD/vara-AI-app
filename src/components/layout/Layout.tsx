@@ -1,6 +1,10 @@
-import { useEffect, type ReactNode } from 'react';
-import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+'use client';
+
+import { useEffect, useState, type ReactNode } from 'react';
+import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 import {
   Search, LayoutDashboard, BarChart2, MessageSquare, Menu, ChevronLeft, ChevronRight,
   BookOpen, Globe, Users, Briefcase, Handshake, Code, LifeBuoy,
@@ -24,22 +28,24 @@ function SidebarNavItem({
   icon: ReactNode;
   isSidebarCollapsed: boolean;
 }) {
+  const pathname = usePathname();
+  const isActive = pathname === to || pathname.startsWith(`${to}/`);
   return (
-    <NavLink
-      to={to}
+    <Link
+      href={to}
       title={isSidebarCollapsed ? label : undefined}
       aria-label={label}
-      className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+      className={`nav-item ${isActive ? 'active' : ''}`}
     >
       {icon}
       <span>{label}</span>
-    </NavLink>
+    </Link>
   );
 }
 
 export function Sidebar() {
-  const location = useLocation();
-  const isLanding = location.pathname === '/';
+  const location = usePathname();
+  const isLanding = location === '/';
   const { themeMode, isSidebarCollapsed, toggleSidebarCollapsed } = useApp();
   const brandTone = themeMode === 'dark' ? 'light' : 'dark';
 
@@ -114,11 +120,17 @@ export function Sidebar() {
 }
 
 export function Navbar() {
-  const location = useLocation();
-  const isLanding = location.pathname === '/';
+  const location = usePathname();
+  const isLanding = location === '/';
   const { setChatOpen, setCurrentPageContext, themeMode, toggleThemeMode } = useApp();
   const nextThemeLabel = themeMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
   const brandTone = themeMode === 'dark' ? 'light' : 'dark';
+  const { isSignedIn, isLoaded } = useUser();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const pageLabels: Record<string, string> = {
@@ -137,12 +149,12 @@ export function Navbar() {
 
     const matchingLabel = Object.entries(pageLabels).find(([path]) =>
       path === '/'
-        ? location.pathname === path
-        : location.pathname === path || location.pathname.startsWith(`${path}/`)
+        ? location === path
+        : location === path || location.startsWith(`${path}/`)
     )?.[1] || 'Workspace';
 
-    setCurrentPageContext({ path: location.pathname, label: matchingLabel });
-  }, [location.pathname, setCurrentPageContext]);
+    setCurrentPageContext({ path: location, label: matchingLabel });
+  }, [location, setCurrentPageContext]);
 
   return (
     <header className={`navbar ${isLanding ? 'landing-nav' : ''}`}>
@@ -161,11 +173,11 @@ export function Navbar() {
       <div className="navbar-spacer"></div>
 
       <div className="navbar-actions">
-        <button className="theme-toggle-btn" onClick={toggleThemeMode} title={nextThemeLabel} type="button">
-          {themeMode === 'dark' ? <Moon size={17} /> : <Sun size={17} />}
+        <button className="theme-toggle-btn" onClick={toggleThemeMode} title={mounted ? nextThemeLabel : 'Switching theme...'} type="button">
+          {mounted ? (themeMode === 'dark' ? <Moon size={17} /> : <Sun size={17} />) : <div style={{width: 17, height: 17}} />}
           <span className="theme-toggle-copy">
-            <strong>{themeMode === 'dark' ? 'Dark mode' : 'Light mode'}</strong>
-            <span>{themeMode === 'dark' ? 'Switches to light surfaces' : 'Switches to darker viewing'}</span>
+            <strong>{mounted ? (themeMode === 'dark' ? 'Dark mode' : 'Light mode') : 'Theme'}</strong>
+            <span>{mounted ? (themeMode === 'dark' ? 'Switches to light surfaces' : 'Switches to darker viewing') : 'Loading...'}</span>
           </span>
         </button>
         {!isLanding && (
@@ -179,32 +191,28 @@ export function Navbar() {
           </button>
         )}
         {clerkEnabled ? (
-          <>
-            <SignedOut>
-              <div className="nav-auth-actions">
-                <SignInButton>
-                  <button className="nav-auth-btn nav-auth-btn-secondary" type="button">
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton>
-                  <button className="nav-auth-btn nav-auth-btn-primary" type="button">
-                    Get Started
-                  </button>
-                </SignUpButton>
-              </div>
-            </SignedOut>
-            <SignedIn>
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: 'urc-clerk-avatar',
-                  },
-                }}
-              />
-            </SignedIn>
-          </>
+          isLoaded && !isSignedIn ? (
+            <div className="nav-auth-actions">
+              <SignInButton>
+                <button className="nav-auth-btn nav-auth-btn-secondary" type="button">
+                  Sign In
+                </button>
+              </SignInButton>
+              <SignUpButton>
+                <button className="nav-auth-btn nav-auth-btn-primary" type="button">
+                  Get Started
+                </button>
+              </SignUpButton>
+            </div>
+          ) : isLoaded && isSignedIn ? (
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'urc-clerk-avatar',
+                },
+              }}
+            />
+          ) : null
         ) : (
           <div className="avatar">JD</div>
         )}
@@ -213,9 +221,9 @@ export function Navbar() {
   );
 }
 
-export function Layout() {
-  const location = useLocation();
-  const isLanding = location.pathname === '/';
+export function Layout({ children }: { children: ReactNode }) {
+  const location = usePathname();
+  const isLanding = location === '/';
   const { isChatOpen } = useApp();
 
   return (
@@ -224,7 +232,7 @@ export function Layout() {
       <div className="main-content">
         <Navbar />
         <main className="page-content">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

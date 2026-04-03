@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BellRing, ChevronDown, X } from 'lucide-react';
 import { AUDITOR_OPTIONS, canonicalizeAuditorInput } from '../../services/auditors';

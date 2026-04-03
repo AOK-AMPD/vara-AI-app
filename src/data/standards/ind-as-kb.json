@@ -1,0 +1,30 @@
+{
+  "framework": "Ind AS",
+  "standards": [
+    {
+      "id": "Ind AS 115",
+      "title": "Revenue from Contracts with Customers",
+      "equivalentTo": "IFRS 15 / ASC 606",
+      "keyDifferences": [
+        "Largely convergent with IFRS 15.",
+        "Includes specific carve-outs/carve-ins by the MCA in India, especially regarding accounting for penalties."
+      ]
+    },
+    {
+      "id": "Ind AS 116",
+      "title": "Leases",
+      "equivalentTo": "IFRS 16 / ASC 842",
+      "keyDifferences": [
+        "Follows the single-model approach of IFRS 16 (all treated as finance leases for the lessee)."
+      ]
+    },
+    {
+      "id": "Ind AS 109",
+      "title": "Financial Instruments",
+      "equivalentTo": "IFRS 9 / ASC 815",
+      "keyDifferences": [
+        "Convergent with IFRS 9 with specific transitional exemptions and modifications by the MCA for the Indian market."
+      ]
+    }
+  ]
+}

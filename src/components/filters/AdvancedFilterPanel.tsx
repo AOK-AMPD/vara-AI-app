@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronRight } from 'lucide-react';
 import CompanySearchInput from './CompanySearchInput';

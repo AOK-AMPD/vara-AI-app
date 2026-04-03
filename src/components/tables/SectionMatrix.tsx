@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckCircle2, MinusCircle } from 'lucide-react';
 import './SectionMatrix.css';
 

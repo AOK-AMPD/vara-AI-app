@@ -479,3 +479,95 @@
   border-color: rgba(214, 108, 174, 0.4);
 }
 
+/* Streaming answer indicator */
+.copilot-answer.streaming {
+  position: relative;
+}
+
+.copilot-answer.streaming::after {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 16px;
+  background: var(--accent-primary, #d66cae);
+  margin-left: 2px;
+  animation: blink 0.7s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Search logic card */
+.search-logic-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.search-logic-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.search-logic-row:last-child {
+  margin-bottom: 0;
+}
+
+.search-logic-label {
+  font-weight: 600;
+  color: var(--accent-soft, #ebb7d3);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.confidence-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.confidence-badge.high {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.confidence-badge.medium {
+  background: rgba(250, 204, 21, 0.15);
+  color: #facc15;
+}
+
+.confidence-badge.low {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+/* Sample prompt categories */
+.sample-category {
+  margin-bottom: 12px;
+}
+
+.sample-category .section-label {
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.sample-category .suggestion-list {
+  gap: 6px;
+}
+
+.sample-category .suggestion-pill {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+

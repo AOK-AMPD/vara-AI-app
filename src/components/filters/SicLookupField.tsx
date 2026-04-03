@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Building2, Loader2, X } from 'lucide-react';
 import { loadSicDirectory, type SicDirectoryEntry } from '../../services/referenceData';

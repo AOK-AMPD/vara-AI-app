@@ -1,0 +1,35 @@
+{
+  "framework": "IFRS",
+  "standards": [
+    {
+      "id": "IFRS 15",
+      "title": "Revenue from Contracts with Customers",
+      "equivalentTo": "ASC 606",
+      "keyDifferences": [
+        "IFRS 15 has a single comprehensive model for revenue recognition identical in core principles to ASC 606.",
+        "IFRS does not have the specific industry-specific guidance (e.g. software) that exists in legacy US GAAP, relying more on principle-based application.",
+        "Collectibility threshold: IFRS uses 'probable' (which is interpreted as more likely than not), whereas US GAAP uses 'probable' (which is interpreted as around 75-80% likely)."
+      ],
+      "disclosureRequirements": "Entities must provide qualitative and quantitative information about contracts with customers, significant judgments, and assets recognized from the costs to obtain or fulfill a contract."
+    },
+    {
+      "id": "IFRS 16",
+      "title": "Leases",
+      "equivalentTo": "ASC 842",
+      "keyDifferences": [
+        "Under IFRS 16, there is a single lessee accounting model where all leases are treated as finance leases (recognizing right-of-use asset and lease liability).",
+        "Under ASC 842, lessees classify leases as either operating or finance, directly impacting the income statement presentation (straight-line vs front-loaded).",
+        "IFRS 16 exempts low-value assets and short-term leases from capitalization. US GAAP does not have a low-value asset exemption."
+      ]
+    },
+    {
+      "id": "IFRS 9",
+      "title": "Financial Instruments",
+      "equivalentTo": "ASC 326 (CECL) / ASC 815",
+      "keyDifferences": [
+        "Impairment: IFRS 9 uses a 3-stage Expected Credit Loss (ECL) model where 12-month ECL is recognized for Stage 1, while US GAAP CECL recognizes lifetime expected credit losses immediately.",
+        "Hedging: IFRS 9 aligns hedge accounting more closely with risk management, whereas US GAAP remains slightly more rules-based."
+      ]
+    }
+  ]
+}

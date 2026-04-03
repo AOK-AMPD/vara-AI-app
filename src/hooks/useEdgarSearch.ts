@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback } from 'react';
 import { searchEdgarFilings, type EdgarSearchHit } from '../services/secApi';
 

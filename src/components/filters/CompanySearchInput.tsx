@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
 import { buildSecProxyUrl, loadTickerMap } from '../../services/secApi';

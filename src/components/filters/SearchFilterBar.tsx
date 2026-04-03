@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { Filter, X, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
 import CompanyLookupField from './CompanyLookupField';
@@ -20,6 +22,7 @@ export interface SearchFilters {
   accessionNumber: string;
   fileNumber: string;
   fiscalYearEnd: string;
+  accountingFramework: string;
 }
 
 export const defaultSearchFilters: SearchFilters = {
@@ -38,6 +41,7 @@ export const defaultSearchFilters: SearchFilters = {
   accessionNumber: '',
   fileNumber: '',
   fiscalYearEnd: '',
+  accountingFramework: '',
 };
 
 export interface SearchFilterBarConfig {
@@ -54,6 +58,7 @@ export interface SearchFilterBarConfig {
   showAccessionNumber?: boolean;
   showFileNumber?: boolean;
   showFiscalYearEnd?: boolean;
+  showAccountingFramework?: boolean;
   formTypeOptions?: string[];
 }
 
@@ -196,7 +201,8 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
     (filters.accountant ? 1 : 0) +
     (filters.accessionNumber ? 1 : 0) +
     (filters.fileNumber ? 1 : 0) +
-    (filters.fiscalYearEnd ? 1 : 0);
+    (filters.fiscalYearEnd ? 1 : 0) +
+    (filters.accountingFramework ? 1 : 0);
 
   const handleClear = () => {
     onChange({ ...defaultSearchFilters, keyword: filters.keyword });
@@ -218,6 +224,7 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
   if (filters.accessionNumber) chips.push({ label: `Acc#: ${filters.accessionNumber}`, clear: () => onChange({ ...filters, accessionNumber: '' }) });
   if (filters.fileNumber) chips.push({ label: `File#: ${filters.fileNumber}`, clear: () => onChange({ ...filters, fileNumber: '' }) });
   if (filters.fiscalYearEnd) chips.push({ label: `FYE: ${FY_LABELS[filters.fiscalYearEnd] || filters.fiscalYearEnd}`, clear: () => onChange({ ...filters, fiscalYearEnd: '' }) });
+  if (filters.accountingFramework) chips.push({ label: `Framework: `, clear: () => onChange({ ...filters, accountingFramework: '' }) });
 
   return (
     <div style={{ marginBottom: '16px' }}>
@@ -428,6 +435,19 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
             </CollapsibleSection>
           )}
 
+          {/* Accounting Framework */}
+          {config.showAccountingFramework && (
+            <CollapsibleSection title="Accounting Framework">
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {['US GAAP', 'IFRS', 'Ind AS'].map(fw => (
+                  <button key={fw} onClick={() => onChange({ ...filters, accountingFramework: filters.accountingFramework === fw ? '' : fw })} style={pillBtnStyle(filters.accountingFramework === fw)}>
+                    {fw}
+                  </button>
+                ))}
+              </div>
+            </CollapsibleSection>
+          )}
+
           {/* Expert filters */}
           {(config.showAccessionNumber || config.showFileNumber) && (
             <CollapsibleSection title="Expert Filters">
@@ -481,3 +501,4 @@ export default function SearchFilterBar({ config, filters, onChange, onSearch, l
     </div>
   );
 }
+

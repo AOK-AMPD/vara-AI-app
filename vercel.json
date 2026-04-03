@@ -10,5 +10,6 @@
     { "src": "^/(ix|ixviewer|Archives|include|files|cdata|js|css|images)/(.*)$", "dest": "/api/sec-proxy?path=$1/$2" },
     { "handle": "filesystem" },
     { "src": "/.*", "dest": "/" }
-  ]
+  ],
+  "crons": [{ "path": "/api/cron/precompute", "schedule": "0 9 * * *" }]
 }
