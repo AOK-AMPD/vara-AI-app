@@ -1,4 +1,5 @@
 {
+  "framework": "nextjs",
   "routes": [
     { "src": "^/sec-proxy/?$", "dest": "/api/sec-proxy" },
     { "src": "^/sec-proxy/(.*)$", "dest": "/api/sec-proxy?path=$1" },
