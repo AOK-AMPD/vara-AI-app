@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { FileSearch, Search, Loader2, ExternalLink, TrendingUp } from 'lucide-react';
 import DataTable, { type ColumnDef } from '../components/tables/DataTable';
 import ResultsToolbar from '../components/tables/ResultsToolbar';
@@ -23,6 +24,7 @@ const EXHIBIT_TYPES = [
 const cardStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', cursor: 'pointer', transition: 'border-color 0.2s' };
 
 export default function ExhibitSearch() {
+  const navigate = useRouter();
   const [filters, setFilters] = useState<SearchFilters>({ ...defaultSearchFilters });
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [results, setResults] = useState<ExhibitRow[]>([]);
@@ -82,8 +84,7 @@ export default function ExhibitSearch() {
   }
 
   function viewFiling(row: ExhibitRow) {
-    const accNum = row.accessionNumber.replace(/-/g, '');
-    window.open(`https://www.sec.gov/Archives/edgar/data/${row.cik}/${accNum}/${row.primaryDocument}`, '_blank');
+    navigate.push(`/filing/${row.cik}_${row.accessionNumber}_${row.primaryDocument}`);
   }
 
   const columns: ColumnDef<ExhibitRow>[] = [

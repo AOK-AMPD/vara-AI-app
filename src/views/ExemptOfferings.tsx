@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { DollarSign, Search, Loader2, ExternalLink, TrendingUp } from 'lucide-react';
 import DataTable, { type ColumnDef } from '../components/tables/DataTable';
 import ResultsToolbar from '../components/tables/ResultsToolbar';
@@ -14,6 +15,7 @@ interface FormDRow { entityName: string; fileDate: string; formType: string; cik
 const cardStyle: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', cursor: 'pointer', transition: 'border-color 0.2s' };
 
 export default function ExemptOfferings() {
+  const navigate = useRouter();
   const [filters, setFilters] = useState<SearchFilters>({ ...defaultSearchFilters });
   const [results, setResults] = useState<FormDRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,8 +68,7 @@ export default function ExemptOfferings() {
   }
 
   function viewFiling(row: FormDRow) {
-    const accNum = row.accessionNumber.replace(/-/g, '');
-    window.open(`https://www.sec.gov/Archives/edgar/data/${row.cik}/${accNum}/${row.primaryDocument}`, '_blank');
+    navigate.push(`/filing/${row.cik}_${row.accessionNumber}_${row.primaryDocument}`);
   }
 
   const columns: ColumnDef<FormDRow>[] = [
