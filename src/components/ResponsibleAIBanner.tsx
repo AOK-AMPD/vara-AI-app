@@ -4,12 +4,15 @@ import { Info } from 'lucide-react';
 
 export default function ResponsibleAIBanner() {
   return (
-    <div className="flex items-center gap-2 bg-blue-900/20 border border-blue-500/20 text-blue-200/80 p-3 rounded-lg text-xs mt-4">
-      <Info size={14} className="flex-shrink-0 text-blue-400" />
-      <p>
-        <strong>URC Copilot</strong> generates responses based on public SEC filings and available accounting standards.
-        It does not constitute formal legal or financial advice. Always verify critical data against the original source documents.
-      </p>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '6px',
+      padding: '5px 10px', marginTop: '4px',
+      background: 'rgba(30, 58, 138, 0.12)',
+      border: '1px solid rgba(96, 165, 250, 0.12)',
+      borderRadius: '6px', fontSize: '0.68rem', color: 'rgba(148,163,184,0.7)',
+    }}>
+      <Info size={11} style={{ flexShrink: 0, color: 'rgba(96,165,250,0.5)' }} />
+      <span>AI-generated — verify before use</span>
     </div>
   );
 }
