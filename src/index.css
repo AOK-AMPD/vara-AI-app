@@ -660,7 +660,7 @@ th, td {
 
 @media (max-width: 1440px), (max-height: 920px) {
   :root {
-    --copilot-sidebar-width: clamp(320px, 28vw, 420px);
+    --copilot-sidebar-width: clamp(360px, 30vw, 440px);
   }
 
   .primary-btn,
@@ -682,7 +682,28 @@ th, td {
   }
 
   .md-content {
-    font-size: 0.84rem;
+    font-size: 0.86rem;
+  }
+
+  /* Keep copilot answer text readable at smaller viewports */
+  .copilot-answer {
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --copilot-sidebar-width: clamp(360px, 38vw, 460px);
+  }
+
+  .md-content {
+    font-size: 0.88rem;
+  }
+
+  .copilot-answer {
+    font-size: 0.92rem;
+    line-height: 1.7;
   }
 }
 

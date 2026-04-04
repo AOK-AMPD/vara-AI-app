@@ -86,7 +86,8 @@
 .ai-panel-body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -405,11 +406,190 @@
   cursor: not-allowed;
 }
 
+/* ============================= */
+/* RESPONSIVE: TABLETS & SMALL LAPTOPS */
+/* ============================= */
+@media (max-width: 1024px) {
+  .ai-panel {
+    width: min(440px, 100vw);
+  }
+
+  .copilot-answer,
+  .panel-tab-content {
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  .copilot-hero h3 {
+    font-size: 0.92rem;
+  }
+
+  .copilot-hero p,
+  .evidence-summary,
+  .citation-card p,
+  .action-log-detail {
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================= */
+/* RESPONSIVE: MOBILE & SMALL SCREENS */
+/* ============================= */
 @media (max-width: 768px) {
   .ai-panel {
     left: 0;
     width: 100vw;
     height: 100dvh;
+  }
+
+  .ai-panel-body {
+    padding: 12px;
+    gap: 10px;
+    overflow-y: auto;
+  }
+
+  /* Make copilot answer text larger and more readable on mobile */
+  .copilot-answer,
+  .panel-tab-content {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .copilot-answer .md-h2 {
+    font-size: 1.15rem;
+  }
+
+  .copilot-answer .md-h3 {
+    font-size: 1.05rem;
+  }
+
+  .copilot-answer .md-list li {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  .copilot-hero {
+    padding: 12px;
+  }
+
+  .copilot-hero h3 {
+    font-size: 1rem;
+  }
+
+  .copilot-hero p {
+    font-size: 0.88rem;
+  }
+
+  .run-card-header {
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .run-prompt {
+    font-size: 0.95rem;
+  }
+
+  .panel-tabs {
+    padding: 8px 12px 0;
+  }
+
+  .panel-tabs button {
+    font-size: 0.85rem;
+    padding: 6px 2px;
+  }
+
+  .panel-tab-content {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .evidence-summary,
+  .citation-card p,
+  .action-log-detail,
+  .planned-action-reason {
+    font-size: 0.88rem;
+  }
+
+  .citation-card {
+    padding: 10px 12px;
+  }
+
+  .citation-card-header {
+    font-size: 0.9rem;
+  }
+
+  .suggestion-pill {
+    font-size: 0.82rem;
+    padding: 7px 12px;
+  }
+
+  .ai-input-area {
+    padding: 12px;
+  }
+
+  .ai-input-area input {
+    padding: 10px 12px;
+    font-size: 0.95rem;
+  }
+
+  .loading-state {
+    font-size: 0.92rem;
+  }
+
+  /* Search logic card readable on mobile */
+  .search-logic-card {
+    font-size: 0.82rem;
+  }
+
+  .search-logic-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .search-logic-label {
+    min-width: unset;
+  }
+}
+
+/* ============================= */
+/* RESPONSIVE: VERY SMALL SCREENS */
+/* ============================= */
+@media (max-width: 480px) {
+  .ai-panel-header {
+    padding: 12px 14px;
+  }
+
+  .copilot-answer,
+  .panel-tab-content {
+    font-size: 1rem;
+  }
+
+  .run-history {
+    gap: 4px;
+  }
+
+  .history-chip {
+    font-size: 0.72rem;
+    padding: 5px 8px;
+  }
+
+  .sample-category .suggestion-pill {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .draft-alert-card {
+    padding: 10px;
+  }
+
+  .draft-alert-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .draft-alert-actions button {
+    width: 100%;
   }
 }
 
