@@ -85,6 +85,8 @@
   padding: 32px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Reusing tab-pane and pane-header styles universally */

@@ -330,7 +330,7 @@ export default function BoardProfiles() {
           )}
 
           {activeTab === 'directors' && companyData && boardData && !boardLoading && (
-            <div className="tab-pane fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="tab-pane fade-in" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                   <h2>Board of Directors — {companyName}</h2>
@@ -339,7 +339,7 @@ export default function BoardProfiles() {
                 <span className="badge" style={{ fontSize: '0.7rem' }}>Claude AI Extracted</span>
               </div>
 
-              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '12px' }}>
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#0F172A', borderBottom: '1px solid rgba(51,65,85,0.5)', fontSize: '0.875rem' }}>
@@ -439,7 +439,7 @@ export default function BoardProfiles() {
           )}
 
           {activeTab === 'compensation' && companyData && boardData && !boardLoading && (
-            <div className="tab-pane fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="tab-pane fade-in" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <div>
                   <h2>Executive Compensation — {companyName}</h2>
@@ -448,7 +448,7 @@ export default function BoardProfiles() {
                 <span className="badge" style={{ fontSize: '0.7rem' }}>Claude AI Extracted</span>
               </div>
 
-              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '12px', overflow: 'hidden', marginBottom: '32px' }}>
+              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '12px', marginBottom: '32px' }}>
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#0F172A', borderBottom: '1px solid rgba(51,65,85,0.5)', fontSize: '0.875rem' }}>
@@ -501,7 +501,7 @@ export default function BoardProfiles() {
                   <Loader2 size={14} className="spinner" /> Loading comparison data...
                 </div>
               )}
-              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ border: '1px solid rgba(51,65,85,0.5)', borderRadius: '10px', overflow: 'auto' }}>
                 <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: '#0F172A', borderBottom: '1px solid rgba(51,65,85,0.5)', fontSize: '0.85rem' }}>
