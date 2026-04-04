@@ -30,7 +30,7 @@ const cardStyle: React.CSSProperties = {
   transition: 'border-color 0.2s',
 };
 
-const COMMENT_LETTERS_USE_ELASTICSEARCH = true;
+const COMMENT_LETTERS_USE_ELASTICSEARCH = false;
 
 export default function CommentLetters() {
   const navigate = useRouter();

@@ -62,11 +62,14 @@ Provide a concise 3-4 sentence insight summary for a practitioner:
 Be direct and specific. No preamble.`;
 
         const text = await askAi(prompt);
-        if (!cancelled) {
+        if (!cancelled && text && !text.startsWith('I encountered an error')) {
           setSummary(text);
           summaryCache.set(cacheKey, text);
+        } else if (!cancelled) {
+          setError(true);
         }
       } catch {
+        // Expected when API key is not configured or network is unavailable
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);

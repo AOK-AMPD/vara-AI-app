@@ -56,6 +56,7 @@ export function URCBrandLockup({
     <span
       className={className}
       aria-label={BRAND.productName}
+      suppressHydrationWarning
       style={{
         display: 'inline-flex',
         alignItems: 'center',
@@ -67,6 +68,7 @@ export function URCBrandLockup({
       <img
         src={resolveLogoSource(tone)}
         alt={BRAND.parentName}
+        suppressHydrationWarning
         style={{
           display: 'block',
           height: compact ? 'auto' : `${logoHeight}px`,
@@ -80,6 +82,7 @@ export function URCBrandLockup({
       />
       {showParent && !compact && (
         <span
+          suppressHydrationWarning
           style={{
             display: 'inline-flex',
             flexDirection: 'column',
@@ -88,6 +91,7 @@ export function URCBrandLockup({
           }}
         >
           <span
+            suppressHydrationWarning
             style={{
               color: textColor,
               fontWeight: 700,
@@ -100,6 +104,7 @@ export function URCBrandLockup({
             {productLine}
           </span>
           <span
+            suppressHydrationWarning
             style={{
               color: subColor,
               fontSize: '0.7rem',
